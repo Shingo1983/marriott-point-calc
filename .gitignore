@@ -1,0 +1,17 @@
+# Build inputs / intermediate data — not needed to run the site
+hotels-raw.json
+scrape_hotels.py
+build_hotels_js.py
+
+# Editor temp files
+*.tmp
+*.tmp.*
+index.html.tmp.*
+
+# Claude / local tooling
+.claude/
+memory/
+
+# OS
+.DS_Store
+Thumbs.db

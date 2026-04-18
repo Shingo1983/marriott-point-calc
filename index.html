@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6B2C32">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Marriott Point Value Calculator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%23ffffff'/%3E%3Ctext x='24' y='22' font-family='Arial,Helvetica,sans-serif' font-size='9' font-weight='700' fill='%23111111' text-anchor='middle' letter-spacing='0.5'%3EMARRIOTT%3C/text%3E%3Ctext x='24' y='36' font-family='Arial,Helvetica,sans-serif' font-size='12' font-weight='900' fill='%23111111' text-anchor='middle'%3EBONVOY%3C/text%3E%3Crect x='22' y='38' width='6' height='1.5' fill='%23E8835B'/%3E%3C/svg%3E">
+<style>
+  :root {
+    /* Marriott Bonvoy corporate: black primary + peach-orange accent. */
+    --c-primary: #141414;            /* Bonvoy black */
+    --c-primary-dark: #000000;
+    --c-primary-light: #2C2C2C;
+    --c-accent: #F28E5B;             /* Bonvoy peach-orange accent */
+    --c-accent-dark: #D9663A;
+    --c-accent-soft: #FDE4D5;        /* pale peach tint for backgrounds */
+    --c-bg: #FAFAF9;                 /* near-white canvas */
+    --c-surface: #FFFFFF;
+    --c-surface-2: #F4F3F1;          /* soft neutral */
+    --c-text: #141414;
+    --c-text-muted: #5A5A5A;
+    --c-text-subtle: #8E8E8E;
+    --c-border: #E6E5E2;
+    --c-border-strong: #CFCEC9;
+    --c-val-excellent-bg: #141414;
+    --c-val-excellent-text: #F28E5B;
+    --c-val-good-bg: #F28E5B;
+    --c-val-good-text: #141414;
+    --c-val-ok-bg: #FDE4D5;
+    --c-val-ok-text: #8A3D17;
+    --c-val-low-bg: #EDECE8;
+    --c-val-low-text: #6A6A6A;
+    --c-val-none-bg: #ECEBE6;
+    --c-val-none-text: #9A9A9A;
+    --c-success: #2E7D32;
+    --c-warning: #B86E00;
+    --c-danger: #B3261E;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --font-serif: "Playfair Display", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--c-bg); color: var(--c-text);
+    line-height: 1.5; min-height: 100vh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(201,169,110,0.08), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(107,44,50,0.06), transparent 45%);
+    background-attachment: fixed;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: #ffffff;
+    color: var(--c-text);
+    padding: 14px 20px 14px;
+    border-bottom: 1px solid var(--c-border);
+    position: relative;
+  }
+  .header-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; position: relative; }
+  .logo-mark {
+    flex: 0 0 auto; display: grid; place-items: center;
+  }
+  .logo-mark picture,
+  .logo-mark img,
+  .logo-mark svg { display: block; height: 44px; width: auto; }
+  .logo-mark img { object-fit: contain; }
+  .logo-tag {
+    font-size: 0.7rem; color: var(--c-text-subtle);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    font-weight: 600;
+    padding-left: 12px; margin-left: 4px;
+    border-left: 1px solid var(--c-border);
+  }
+
+  /* ===== MAIN ===== */
+  main {
+    max-width: 760px; margin: 0 auto;
+    padding: 14px 14px 60px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .card {
+    background: var(--c-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 14px 16px 16px;
+    border: 1px solid var(--c-border);
+  }
+  .card h2 {
+    font-family: var(--font-serif);
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--c-primary-dark);
+    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .step {
+    display: inline-grid; place-items: center;
+    width: 22px; height: 22px;
+    background: var(--c-primary); color: #fff;
+    font-size: 0.72rem; font-family: var(--font-sans);
+    border-radius: 50%; font-weight: 700;
+  }
+  .card .card-hint { font-size: 0.76rem; color: var(--c-text-muted); margin-bottom: 10px; line-height: 1.4; }
+
+  /* ===== FIELDS ===== */
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 10px; }
+  .field-grid.tight { grid-template-columns: 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--c-text-muted); letter-spacing: 0.2px;
+  }
+  .field input[type="date"], .field input[type="number"], .field input[type="text"], .field select {
+    font-family: inherit; font-size: 0.95rem;
+    padding: 9px 11px; min-height: 40px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface); color: var(--c-text);
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field select {
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--c-text-muted) 50%),
+      linear-gradient(135deg, var(--c-text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 28px;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(107,44,50,0.12);
+  }
+  .field select:disabled { background-color: var(--c-surface-2); color: var(--c-text-subtle); cursor: not-allowed; }
+  .wd { color: var(--c-primary); font-weight: 700; font-size: 0.8rem; margin-left: 2px; }
+  .date-wrap { position: relative; }
+  .date-wrap input[type="date"] { font-variant-numeric: tabular-nums; }
+  .date-wrap input[type="date"]::-webkit-datetime-edit { opacity: 0; }
+  .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper { opacity: 0; }
+  .date-overlay {
+    position: absolute;
+    left: 12px;
+    top: 0; bottom: 0;
+    display: flex; align-items: center;
+    pointer-events: none;
+    font-size: 0.95rem;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, Menlo, Consolas, "Segoe UI", monospace;
+    letter-spacing: 0.3px;
+  }
+  .date-overlay:empty::before { content: ""; }
+
+  .section-label {
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--c-text-muted);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin: 8px 0 4px;
+  }
+
+  /* ===== NIGHTS BADGE (inline with checkout label) ===== */
+  .label-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .nights-badge {
+    display: inline-flex; align-items: center;
+    background: var(--c-primary); color: #fff;
+    padding: 1px 9px; border-radius: 999px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3px;
+    line-height: 1.4;
+  }
+  .nights-badge[hidden] { display: none; }
+
+  /* ===== COUNTERS ===== */
+  .counter {
+    display: flex; align-items: center;
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface); overflow: hidden; height: 40px;
+  }
+  .counter button {
+    flex: 0 0 40px; height: 100%;
+    border: 0; background: transparent;
+    color: var(--c-primary); font-size: 1.2rem; font-weight: 600;
+    cursor: pointer;
+  }
+  .counter button:hover:not(:disabled) { background: var(--c-surface-2); }
+  .counter button:disabled { color: var(--c-text-subtle); cursor: not-allowed; }
+  .counter .value { flex: 1; text-align: center; font-weight: 600; font-size: 0.95rem; }
+
+  .children-ages { display: flex; flex-wrap: nowrap; gap: 4px; margin-top: 6px; justify-content: flex-end; }
+  .children-ages.hidden { display: none; }
+  .age-field {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--c-surface-2); padding: 3px 6px 3px 8px;
+    border-radius: 999px; font-size: 0.72rem;
+    flex: 0 0 auto; white-space: nowrap; min-width: 0;
+  }
+  .age-field label { color: var(--c-text-muted); font-weight: 500; white-space: nowrap; }
+  .age-field input {
+    width: 36px; padding: 2px 4px;
+    border: 1px solid var(--c-border-strong); border-radius: 5px;
+    font-size: 0.8rem; text-align: center; min-height: 24px;
+  }
+
+  /* ===== MARRIOTT LINK ===== */
+  .marriott-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--c-primary); text-decoration: none;
+    font-weight: 600; font-size: 0.84rem;
+    padding: 8px 12px;
+    background: var(--c-surface-2);
+    border-radius: var(--radius-sm); border: 1px solid var(--c-border);
+    margin-top: 10px;
+  }
+  .marriott-link:hover { background: var(--c-border); }
+  .marriott-link[aria-disabled="true"] { color: var(--c-text-subtle); pointer-events: none; }
+
+  /* ===== FX ROW (FIXED LAYOUT) ===== */
+  .fx-row {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 8px 10px;
+    align-items: start;
+  }
+  .fx-input-row { display: flex; gap: 4px; align-items: stretch; }
+  .fx-input-row input { flex: 1; min-width: 0; }
+  .fx-refresh {
+    flex: 0 0 auto;
+    font-family: inherit;
+    font-size: 0.78rem; font-weight: 600;
+    padding: 0 10px; min-height: 40px;
+    background: var(--c-surface-2);
+    color: var(--c-primary);
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .fx-refresh:hover { background: var(--c-border); }
+  .fx-refresh:disabled { opacity: 0.6; cursor: progress; }
+  .fx-status {
+    grid-column: 1 / -1;
+    font-size: 0.7rem; color: var(--c-text-subtle);
+    margin-top: -2px;
+  }
+  .fx-status.live::before { content: "●"; color: var(--c-success); margin-right: 4px; }
+  .fx-status.stale::before { content: "●"; color: var(--c-warning); margin-right: 4px; }
+
+  /* ===== OCR BOX ===== */
+  .ocr-box { margin-bottom: 10px; }
+  .ocr-btn {
+    width: 100%;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit; font-size: 0.88rem; font-weight: 600;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, var(--c-primary-dark), var(--c-primary));
+    color: #fff;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: filter 0.12s;
+  }
+  .ocr-btn:hover { filter: brightness(1.1); }
+  .ocr-btn:active { transform: translateY(1px); }
+  .ocr-beta {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+    background: var(--c-accent); color: var(--c-primary-dark);
+    padding: 1px 6px; border-radius: 3px;
+  }
+  .ocr-status {
+    margin-top: 6px; padding: 8px 12px;
+    background: var(--c-surface-2);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--c-text-muted);
+    border-left: 3px solid var(--c-text-subtle);
+    white-space: pre-line;
+    line-height: 1.55;
+  }
+  .ocr-status strong { font-weight: 700; }
+  .ocr-status.ok { border-left-color: var(--c-success); color: var(--c-success); background: #E8F3EC; }
+  .ocr-status.err { border-left-color: var(--c-danger); color: var(--c-danger); background: #FDECEB; }
+  .ocr-text {
+    width: 100%; margin-top: 6px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    padding: 8px; border-radius: 6px;
+    border: 1px solid var(--c-border-strong);
+    background: #fff; color: var(--c-text);
+    resize: vertical; min-height: 70px;
+  }
+  .ocr-actions { display: flex; gap: 6px; margin-top: 6px; }
+  .ocr-apply, .ocr-cancel {
+    font-family: inherit; font-weight: 600; font-size: 0.82rem;
+    padding: 7px 14px; border-radius: var(--radius-sm);
+    cursor: pointer; border: 0;
+  }
+  .ocr-apply { background: var(--c-primary); color: #fff; }
+  .ocr-apply:hover { background: var(--c-primary-dark); }
+  .ocr-cancel { background: transparent; color: var(--c-text-muted); border: 1px solid var(--c-border-strong); }
+  .ocr-cancel:hover { background: var(--c-surface-2); }
+
+  /* ===== RATE BLOCKS ===== */
+  .rate-block {
+    background: var(--c-surface-2);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-top: 8px;
+    border: 1px solid var(--c-border);
+  }
+  .rate-block-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .rate-number {
+    flex: 0 0 24px; height: 24px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    display: grid; place-items: center;
+    font-size: 0.8rem; font-weight: 700;
+  }
+  .rate-title { font-weight: 700; color: var(--c-primary-dark); font-size: 0.92rem; }
+  .rate-sub { font-size: 0.72rem; color: var(--c-text-muted); }
+  .rate-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rate-inputs.single { grid-template-columns: 1fr; }
+  .with-suffix { position: relative; }
+  .with-suffix .suffix {
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--c-text-muted); font-size: 0.78rem; font-weight: 500;
+    pointer-events: none;
+  }
+  .with-suffix input { padding-right: 42px; }
+
+  /* ===== RESULTS ===== */
+  .results {
+    background: linear-gradient(180deg, #fff 0%, var(--c-surface-2) 100%);
+    border: 1px solid var(--c-accent);
+  }
+  .results-empty {
+    text-align: center; padding: 14px 10px;
+    color: var(--c-text-muted); font-size: 0.84rem;
+  }
+  .result-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .result-card {
+    background: var(--c-surface);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .result-card.winner { border-color: var(--c-accent); box-shadow: 0 0 0 2px rgba(201,169,110,0.3); }
+  .rhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .rhead-left { display: flex; align-items: center; gap: 7px; }
+  .rhead-num {
+    flex: 0 0 20px; height: 20px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    display: grid; place-items: center; font-size: 0.7rem; font-weight: 700;
+  }
+  .rhead-title { font-weight: 700; color: var(--c-primary-dark); font-size: 0.88rem; }
+  .rhead-badge {
+    background: var(--c-accent); color: #fff;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 6px; border-radius: 999px;
+  }
+  .rhead-total { font-size: 0.8rem; color: var(--c-text); font-weight: 700; }
+  .rmeta { font-size: 0.74rem; color: var(--c-text-muted); line-height: 1.4; }
+  .rmeta strong { color: var(--c-text); font-weight: 600; }
+
+  .value-cells { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .value-cell {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    display: flex; flex-direction: column; gap: 1px;
+    background: var(--c-val-none-bg);
+    color: var(--c-val-none-text);
+  }
+  .vc-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.85; }
+  .vc-num { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
+  .vc-unit { font-size: 0.68rem; font-weight: 500; margin-left: 1px; font-family: var(--font-sans); opacity: 0.8; }
+
+  .value-excellent { background: var(--c-val-excellent-bg); color: var(--c-val-excellent-text); }
+  .value-good      { background: var(--c-val-good-bg);      color: var(--c-val-good-text); }
+  .value-ok        { background: var(--c-val-ok-bg);        color: var(--c-val-ok-text); }
+  .value-low       { background: var(--c-val-low-bg);       color: var(--c-val-low-text); }
+
+  .summary-box {
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: var(--c-primary-dark);
+    color: #F4F0E8;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem; line-height: 1.45;
+  }
+  .summary-box strong { color: var(--c-accent); }
+
+  .guideline {
+    margin-top: 8px;
+    font-size: 0.7rem; color: var(--c-text-muted);
+    background: var(--c-surface-2);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--c-accent);
+    line-height: 1.45;
+  }
+  .guideline b { color: var(--c-primary-dark); }
+  .guideline .legend { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; white-space: nowrap; }
+  .guideline .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+
+  /* ===== HISTORY (COMPACT) ===== */
+  .history-controls {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+  }
+  .history-stats { font-size: 0.74rem; color: var(--c-text-muted); flex: 1; min-width: 0; }
+  .history-stats strong { color: var(--c-primary-dark); font-weight: 700; }
+  .btn-primary {
+    background: var(--c-primary); color: #fff; border: 0;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.8rem;
+    font-family: inherit;
+  }
+  .btn-primary:hover { background: var(--c-primary-dark); }
+  .btn-secondary {
+    background: transparent; color: var(--c-text-muted);
+    border: 1px solid var(--c-border-strong);
+    padding: 5px 10px; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.75rem;
+    font-family: inherit;
+  }
+  .btn-secondary:hover { background: var(--c-surface-2); }
+
+  .history-list { display: flex; flex-direction: column; gap: 2px; }
+  .history-row {
+    background: #fff;
+    border-radius: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--c-border);
+    display: grid;
+    grid-template-columns: 185px 36px minmax(0, 1fr) 118px 52px 52px;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.76rem; color: var(--c-text-muted);
+    line-height: 1.4;
+  }
+  .history-row.comparison { background: var(--c-surface-2); opacity: 0.55; }
+  .history-header {
+    background: transparent; border: none; padding: 0 10px 4px;
+    color: var(--c-primary-dark); font-weight: 700; font-size: 0.7rem;
+    letter-spacing: 0.02em;
+  }
+  .history-header span { text-align: center; }
+  .history-header .h-hotel-head { text-align: left; }
+  .history-header .h-nums-head { text-align: right; }
+  .h-dates {
+    font-weight: 700; color: var(--c-primary-dark);
+    white-space: nowrap; font-size: 0.76rem;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+  .h-nights-slot { justify-self: center; }
+  .nights-mini {
+    background: var(--c-primary); color: #fff;
+    font-size: 0.62rem; padding: 2px 7px; border-radius: 999px;
+    font-weight: 600; line-height: 1.3; display: inline-block;
+    white-space: nowrap;
+  }
+  .h-cmp-flag {
+    font-size: 0.6rem; color: var(--c-text-muted);
+    border: 1px dashed var(--c-border-strong);
+    padding: 0 4px; border-radius: 3px;
+    margin-left: 4px; font-weight: 500;
+  }
+  .h-hotel {
+    color: var(--c-text); font-size: 0.78rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
+  .h-nums-compact { color: var(--c-text-muted); font-size: 0.72rem; white-space: nowrap; text-align: right; }
+  .h-nums-compact strong { color: var(--c-text); font-weight: 700; }
+  .vc-mini {
+    display: inline-flex; align-items: baseline; justify-content: center; gap: 2px;
+    padding: 2px 6px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; line-height: 1.3;
+    white-space: nowrap;
+    justify-self: center;
+    min-width: 0;
+  }
+  .vc-mini .vc-mini-label { font-size: 0.56rem; font-weight: 600; opacity: 0.7; margin-right: 1px; }
+  .h-points-only {
+    grid-column: span 2; text-align: center;
+    font-size: 0.64rem; color: var(--c-text-subtle);
+    font-weight: 600; letter-spacing: 0.03em;
+  }
+
+
+  footer {
+    text-align: center; font-size: 0.72rem; color: var(--c-text-subtle);
+    padding: 16px 14px 24px;
+    max-width: 760px; margin: 0 auto; line-height: 1.55;
+  }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 520px) {
+    main { padding: 10px 10px 50px; gap: 10px; }
+    .card { padding: 12px 12px 14px; border-radius: var(--radius-md); }
+    .rate-inputs { grid-template-columns: 1fr; }
+    .fx-row { grid-template-columns: 1fr 1.2fr; }
+    .logo-mark svg { height: 38px; }
+    .logo-tag { font-size: 0.62rem; padding-left: 8px; margin-left: 2px; letter-spacing: 1px; }
+    .vc-num { font-size: 1rem; }
+    .vc-mini { font-size: 0.68rem; padding: 1px 8px; }
+    .history-row {
+      grid-template-columns: 1fr 52px 52px;
+      row-gap: 3px; column-gap: 6px;
+    }
+    .history-row .h-dates { grid-column: 1 / -1; }
+    .history-row .h-nights-slot { grid-column: 1 / -1; }
+    .history-row .h-hotel { grid-column: 1 / -1; font-weight: 600; }
+    .history-row .h-nums-compact { grid-column: 1 / 2; text-align: left; font-size: 0.72rem; }
+    .history-header { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="logo-mark">
+      <img src="marriott-bonvoy.png" alt="Marriott Bonvoy">
+    </div>
+    <div class="logo-tag">Point Value Calculator</div>
+  </div>
+</header>
+
+<main>
+  <!-- STEP 1 -->
+  <section class="card">
+    <h2><span class="step">1</span>宿泊条件</h2>
+
+    <div class="field-grid tight">
+      <div class="field">
+        <label for="checkin">チェックイン</label>
+        <div class="date-wrap">
+          <input type="date" id="checkin">
+          <span class="date-overlay" id="checkin-display" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="checkout" class="label-row">
+          <span>チェックアウト</span>
+          <span id="nights-badge" class="nights-badge" hidden><span id="nights-count">1</span>泊</span>
+        </label>
+        <div class="date-wrap">
+          <input type="date" id="checkout">
+          <span class="date-overlay" id="checkout-display" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">人数</div>
+    <div class="field-grid tight">
+      <div class="field">
+        <label>大人 (13歳以上)</label>
+        <div class="counter" data-counter="adults" data-min="1" data-max="9">
+          <button type="button" data-delta="-1">−</button>
+          <span class="value" id="adults-value">2</span>
+          <button type="button" data-delta="1">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>子ども (0-12歳)</label>
+        <div class="counter" data-counter="children" data-min="0" data-max="6">
+          <button type="button" data-delta="-1">−</button>
+          <span class="value" id="children-value">2</span>
+          <button type="button" data-delta="1">+</button>
+        </div>
+        <div id="children-ages" class="children-ages"></div>
+      </div>
+    </div>
+
+    <div class="section-label">ホテル <span id="hotel-count-badge" style="font-weight:500;font-size:0.65rem;color:var(--c-text-subtle);margin-left:4px;"></span></div>
+    <div class="field-grid">
+      <div class="field">
+        <label for="region-select">地域</label>
+        <select id="region-select"><option value="">選択してください</option></select>
+      </div>
+      <div class="field">
+        <label for="country-select">国・地域</label>
+        <select id="country-select" disabled><option value="">先に地域を選択</option></select>
+      </div>
+      <div class="field">
+        <label for="city-select">都市</label>
+        <select id="city-select" disabled><option value="">先に国を選択</option></select>
+      </div>
+      <div class="field" style="grid-column: 1 / -1;">
+        <label for="hotel-select">ホテル</label>
+        <select id="hotel-select" disabled><option value="">先に都市を選択</option></select>
+      </div>
+    </div>
+
+    <a id="marriott-link" class="marriott-link" href="#" target="_blank" rel="noopener" aria-disabled="true">
+      🔗 ホテルを選択するとリンクが有効になります
+    </a>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card">
+    <h2><span class="step">2</span>レート入力</h2>
+    <p class="card-hint">マリオット公式で表示された3種類の料金をここに転記してください。</p>
+
+    <div class="ocr-box">
+      <input type="file" id="ocr-file" accept="image/*" capture="environment" style="display:none">
+      <button type="button" id="ocr-trigger" class="ocr-btn">
+        <span>📷 レート画面のスクショから自動入力</span>
+        <span class="ocr-beta">BETA</span>
+      </button>
+      <div id="ocr-status" class="ocr-status" hidden></div>
+      <textarea id="ocr-text" class="ocr-text" rows="4" hidden placeholder="OCR結果がここに表示されます（編集可）"></textarea>
+      <div id="ocr-actions" class="ocr-actions" hidden>
+        <button type="button" id="ocr-apply" class="ocr-apply">✓ 3レートに反映</button>
+        <button type="button" id="ocr-cancel" class="ocr-cancel">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="section-label">通貨・為替レート</div>
+    <div class="fx-row">
+      <div class="field">
+        <label for="currency-select">現地通貨</label>
+        <select id="currency-select">
+          <option value="EUR">EUR ユーロ</option>
+          <option value="USD">USD 米ドル</option>
+          <option value="GBP">GBP 英ポンド</option>
+          <option value="JPY">JPY 日本円</option>
+          <option value="SGD">SGD シンガポールドル</option>
+          <option value="AUD">AUD 豪ドル</option>
+          <option value="CNY">CNY 人民元</option>
+          <option value="HKD">HKD 香港ドル</option>
+          <option value="THB">THB タイバーツ</option>
+          <option value="KRW">KRW 韓国ウォン</option>
+          <option value="AED">AED UAEディルハム</option>
+          <option value="CAD">CAD カナダドル</option>
+          <option value="NZD">NZD NZドル</option>
+          <option value="CHF">CHF スイスフラン</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fx-rate">為替 (<span id="fx-from-label">EUR</span> → JPY)</label>
+        <div class="fx-input-row">
+          <input type="number" id="fx-rate" inputmode="decimal" step="0.0001" min="0" value="187.64">
+          <button type="button" id="fx-refresh" class="fx-refresh" title="最新レート取得">🔄 最新</button>
+        </div>
+      </div>
+      <div id="fx-status" class="fx-status">初期値（手動編集可）</div>
+    </div>
+
+    <div class="section-label">3種類のレート</div>
+
+    <div class="rate-block">
+      <div class="rate-block-header">
+        <span class="rate-number">1</span>
+        <div><div class="rate-title">キャッシュオンリー</div></div>
+      </div>
+      <div class="rate-inputs single">
+        <div class="field">
+          <div class="with-suffix">
+            <input type="number" id="cash-only" inputmode="decimal" step="0.01" min="0" placeholder="784">
+            <span class="suffix" data-fx-suffix>EUR</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rate-block">
+      <div class="rate-block-header">
+        <span class="rate-number">2</span>
+        <div><div class="rate-title">キャッシュ + ポイント</div></div>
+      </div>
+      <div class="rate-inputs">
+        <div class="field">
+          <label>現金部分</label>
+          <div class="with-suffix">
+            <input type="number" id="cp-cash" inputmode="decimal" step="0.01" min="0" placeholder="68">
+            <span class="suffix" data-fx-suffix>EUR</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>ポイント部分</label>
+          <div class="with-suffix">
+            <input type="number" id="cp-points" inputmode="numeric" step="1000" min="0" placeholder="96000">
+            <span class="suffix">pt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rate-block">
+      <div class="rate-block-header">
+        <span class="rate-number">3</span>
+        <div><div class="rate-title">ポイントオンリー</div></div>
+      </div>
+      <div class="rate-inputs single">
+        <div class="field">
+          <div class="with-suffix">
+            <input type="number" id="points-only" inputmode="numeric" step="1000" min="0" placeholder="110200">
+            <span class="suffix">pt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card results" aria-live="polite">
+    <h2><span class="step">3</span>計算結果</h2>
+    <div id="results-body">
+      <div class="results-empty">↑ レートを入力すると、1ポイントあたりの円価値が自動で計算されます。</div>
+    </div>
+    <div class="guideline">
+      <b>色分け (1pt価値基準):</b>
+      <span class="legend"><span class="swatch" style="background:var(--c-val-excellent-bg)"></span>≥2.0</span>
+      <span class="legend"><span class="swatch" style="background:var(--c-val-good-bg)"></span>1.5-2.0</span>
+      <span class="legend"><span class="swatch" style="background:var(--c-val-ok-bg)"></span>1.0-1.5</span>
+      <span class="legend"><span class="swatch" style="background:var(--c-val-low-bg)"></span>&lt;1.0</span>
+      <span style="display:inline-block;margin-top:3px;font-size:0.68rem;">※ 100円利用時の価値 = pt価値×3 (Bonvoyカード基本3pt/100円)</span>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="card">
+    <h2><span class="step">4</span>過去のポイント利用履歴</h2>
+    <div class="history-stats" id="history-stats" style="margin-bottom:8px;">—</div>
+    <div class="history-row history-header" aria-hidden="true">
+      <span>期間</span>
+      <span>泊</span>
+      <span class="h-hotel-head">ホテル</span>
+      <span class="h-nums-head">pt / 料金</span>
+      <span>1pt</span>
+      <span>100円</span>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </section>
+</main>
+
+<footer>
+  Marriott Point Value Calculator — 非公式ツール。Marriott Bonvoy® は Marriott International, Inc. の登録商標。<br>
+  実際の料金・ポイント数・為替は必ず公式サイトでご確認ください。
+</footer>
+
+<script src="hotels.js"></script>
+<script>
+/* ==== HOTEL DATA ====
+   Loaded from hotels.js (scraped full list, 9,788 properties).
+   Falls back to minimal curated subset if hotels.js failed to load. */
+const REGIONS = window.HOTELS_DATA || {
+  "アジア": {
+    "日本": [
+      ["The Ritz-Carlton, Tokyo", "tyorz", "/en-us/hotels/tyorz-the-ritz-carlton-tokyo/overview/"],
+      ["The Tokyo EDITION, Toranomon", "tyoet", "/en-us/hotels/tyoet-the-tokyo-edition-toranomon/overview/"],
+      ["W Osaka", "osaow", "/en-us/hotels/osaow-w-osaka/overview/"]
+    ]
+  }
+};
+let currentHotels = [];
+let currentCityGroups = {}; // displayName -> merged hotels array (after prettify + merge)
+
+/* ==== CITY DISPLAY (JA + cleanup for hotels.js city keys) ====
+   hotels.js has ~2200 city keys produced by token-inference on hotel names.
+   Many are 3-letter marsha codes (726) or generic tokens (University, Fort...).
+   This map translates major destinations and buckets noise into "（その他）". */
+const CITY_DISPLAY = {
+  // --- Japan (mostly already translated in build, but safety net) ---
+  "Tokyo":"東京","Osaka":"大阪","Kyoto":"京都","Nara":"奈良","Nagoya":"名古屋",
+  "Fukuoka":"福岡","Hiroshima":"広島","Sapporo":"札幌","Okinawa":"沖縄","Naha":"那覇",
+  "Kobe":"神戸","Yokohama":"横浜","Sendai":"仙台","Niigata":"新潟","Kanazawa":"金沢",
+  "Karuizawa":"軽井沢","Hakone":"箱根","Nikko":"日光","Kumamoto":"熊本","Nagasaki":"長崎",
+  "Kagoshima":"鹿児島","Okayama":"岡山","Matsumoto":"松本","Shizuoka":"静岡","Chitose":"千歳",
+  "Hakodate":"函館","Takamatsu":"高松","Toyama":"富山","Kanagawa":"神奈川","Chiba":"千葉",
+  "Saitama":"埼玉","Nagano":"長野","Yamanashi":"山梨","Shimane":"島根","Tottori":"鳥取",
+  "Mie":"三重","Wakayama":"和歌山","Hyogo":"兵庫","Ehime":"愛媛","Kochi":"高知",
+  "Tokushima":"徳島","Oita":"大分","Miyazaki":"宮崎","Gunma":"群馬","Tochigi":"栃木",
+  "Ibaraki":"茨城","Fukushima":"福島","Yamagata":"山形","Akita":"秋田","Aomori":"青森",
+  "Iwate":"岩手","Gifu":"岐阜","Shiga":"滋賀","Fukui":"福井","Ishikawa":"石川",
+
+  // --- North America: USA ---
+  "Atlanta":"アトランタ","Austin":"オースティン","Baltimore":"ボルチモア","Boston":"ボストン",
+  "Charlotte":"シャーロット","Chicago":"シカゴ","Cincinnati":"シンシナティ","Cleveland":"クリーブランド",
+  "Dallas":"ダラス","Denver":"デンバー","Detroit":"デトロイト","Houston":"ヒューストン",
+  "Indianapolis":"インディアナポリス","Jacksonville":"ジャクソンビル","Memphis":"メンフィス",
+  "Milwaukee":"ミルウォーキー","Minneapolis":"ミネアポリス","Nashville":"ナッシュビル",
+  "Philadelphia":"フィラデルフィア","Phoenix":"フェニックス","Pittsburgh":"ピッツバーグ",
+  "Portland":"ポートランド","Raleigh":"ローリー","Richmond":"リッチモンド","Sacramento":"サクラメント",
+  "Seattle":"シアトル","Tampa":"タンパ","Tucson":"ツーソン","Orlando":"オーランド",
+  "Miami":"マイアミ","Honolulu":"ホノルル","Waikiki":"ワイキキ","Maui":"マウイ",
+  "Kauai":"カウアイ","Kona":"コナ","Scottsdale":"スコッツデール","Anaheim":"アナハイム",
+  "Pasadena":"パサデナ","Hollywood":"ハリウッド","Beverly":"ビバリーヒルズ","Burbank":"バーバンク",
+  "Irvine":"アーバイン","Carlsbad":"カールスバッド","Napa":"ナパ","Monterey":"モントレー",
+  "Stanford":"スタンフォード","Oakland":"オークランド","Berkeley":"バークレー","Sausalito":"サウサリート",
+  "Albuquerque":"アルバカーキ","Savannah":"サバンナ","Asheville":"アッシュビル","Charleston":"チャールストン",
+  "Virginia":"バージニア","Arlington":"アーリントン","Alexandria":"アレクサンドリア","Bethesda":"ベセスダ",
+  "Annapolis":"アナポリス","Newark":"ニューアーク","Buffalo":"バッファロー","Rochester":"ロチェスター",
+  "Syracuse":"シラキュース","Louisville":"ルイビル","Lexington":"レキシントン","Omaha":"オマハ",
+  "Boise":"ボイジー","Reno":"リノ","Spokane":"スポケーン","Anchorage":"アンカレッジ",
+  "Fairbanks":"フェアバンクス","Birmingham":"バーミングハム","Tulsa":"タルサ","Wichita":"ウィチタ",
+  "Columbus":"コロンバス","Madison":"マディソン","Columbia":"コロンビア","Williamsburg":"ウィリアムズバーグ",
+  "Manhattan":"マンハッタン","Brooklyn":"ブルックリン","Queens":"クイーンズ","Bronx":"ブロンクス",
+  "Westchester":"ウェストチェスター","Cambridge":"ケンブリッジ","Newport":"ニューポート",
+  "Stamford":"スタンフォード","Hartford":"ハートフォード","Providence":"プロビデンス",
+
+  // --- Canada ---
+  "Toronto":"トロント","Vancouver":"バンクーバー","Montreal":"モントリオール","Ottawa":"オタワ",
+  "Calgary":"カルガリー","Edmonton":"エドモントン","Quebec":"ケベック","Winnipeg":"ウィニペグ",
+  "Halifax":"ハリファックス","Banff":"バンフ","Whistler":"ウィスラー","Victoria":"ビクトリア",
+  "Niagara":"ナイアガラ","Mississauga":"ミシサガ","Markham":"マーカム","Regina":"レジャイナ",
+  "Saskatoon":"サスカトゥーン","Gatineau":"ガティノー","Kelowna":"ケロウナ",
+
+  // --- Latin America / Caribbean ---
+  "Cancun":"カンクン","Cancún":"カンクン","Tulum":"トゥルム","Cozumel":"コスメル",
+  "Guadalajara":"グアダラハラ","Monterrey":"モンテレー","Acapulco":"アカプルコ","Oaxaca":"オアハカ",
+  "Merida":"メリダ","Mérida":"メリダ","Veracruz":"ベラクルス","Tijuana":"ティファナ",
+  "Ciudad":"シウダー","Queretaro":"ケレタロ","Querétaro":"ケレタロ","Puebla":"プエブラ",
+  "Panama":"パナマ","Santiago":"サンティアゴ","Medellin":"メデジン","Medellín":"メデジン",
+  "Bogota":"ボゴタ","Bogotá":"ボゴタ","Cartagena":"カルタヘナ","Lima":"リマ","Cusco":"クスコ",
+  "Quito":"キト","Guayaquil":"グアヤキル","Caracas":"カラカス","Montevideo":"モンテビデオ",
+  "Asuncion":"アスンシオン","Asunción":"アスンシオン","Brasilia":"ブラジリア","Brasília":"ブラジリア",
+  "Salvador":"サルバドール","Recife":"レシフェ","Fortaleza":"フォルタレザ","Manaus":"マナウス",
+  "Curitiba":"クリチバ","Belem":"ベレン","Belém":"ベレン","Natal":"ナタール",
+  "Nassau":"ナッソー","Kingston":"キングストン","Havana":"ハバナ","Aruba":"アルバ",
+
+  // --- Europe: UK & Ireland ---
+  "London":"ロンドン","Edinburgh":"エディンバラ","Glasgow":"グラスゴー","Manchester":"マンチェスター",
+  "Liverpool":"リバプール","Birmingham":"バーミンガム","Leeds":"リーズ","Bristol":"ブリストル",
+  "Oxford":"オックスフォード","Cambridge":"ケンブリッジ","Aberdeen":"アバディーン","Belfast":"ベルファスト",
+  "Cardiff":"カーディフ","Dublin":"ダブリン","Cork":"コーク","Galway":"ゴールウェイ",
+
+  // --- Europe: Continental ---
+  "Paris":"パリ","Nice":"ニース","Cannes":"カンヌ","Marseille":"マルセイユ","Lyon":"リヨン",
+  "Bordeaux":"ボルドー","Strasbourg":"ストラスブール","Toulouse":"トゥールーズ","Lille":"リール",
+  "Rome":"ローマ","Milan":"ミラノ","Venice":"ヴェネツィア","Florence":"フィレンツェ",
+  "Naples":"ナポリ","Turin":"トリノ","Bologna":"ボローニャ","Verona":"ヴェローナ",
+  "Palermo":"パレルモ","Sicily":"シチリア","Sardinia":"サルデーニャ","Capri":"カプリ",
+  "Barcelona":"バルセロナ","Madrid":"マドリード","Seville":"セビリア","Valencia":"バレンシア",
+  "Malaga":"マラガ","Málaga":"マラガ","Bilbao":"ビルバオ","Granada":"グラナダ","Ibiza":"イビサ",
+  "Mallorca":"マヨルカ","Palma":"パルマ","Tenerife":"テネリフェ","Marbella":"マルベージャ",
+  "Lisbon":"リスボン","Porto":"ポルト","Algarve":"アルガルヴェ","Madeira":"マデイラ",
+  "Berlin":"ベルリン","Munich":"ミュンヘン","Frankfurt":"フランクフルト","Hamburg":"ハンブルク",
+  "Cologne":"ケルン","Stuttgart":"シュトゥットガルト","Dusseldorf":"デュッセルドルフ","Düsseldorf":"デュッセルドルフ",
+  "Leipzig":"ライプツィヒ","Dresden":"ドレスデン","Nuremberg":"ニュルンベルク","Hannover":"ハノーファー",
+  "Bremen":"ブレーメン","Essen":"エッセン","Bonn":"ボン","Heidelberg":"ハイデルベルク",
+  "Amsterdam":"アムステルダム","Rotterdam":"ロッテルダム","Hague":"ハーグ","Utrecht":"ユトレヒト",
+  "Brussels":"ブリュッセル","Antwerp":"アントワープ","Bruges":"ブルッヘ","Ghent":"ヘント",
+  "Luxembourg":"ルクセンブルク","Vienna":"ウィーン","Salzburg":"ザルツブルク","Innsbruck":"インスブルック",
+  "Graz":"グラーツ","Zurich":"チューリッヒ","Geneva":"ジュネーヴ","Basel":"バーゼル","Bern":"ベルン",
+  "Lausanne":"ローザンヌ","Lucerne":"ルツェルン","Prague":"プラハ","Brno":"ブルノ",
+  "Warsaw":"ワルシャワ","Krakow":"クラクフ","Kraków":"クラクフ","Gdansk":"グダンスク","Gdańsk":"グダンスク",
+  "Wroclaw":"ヴロツワフ","Wrocław":"ヴロツワフ","Poznan":"ポズナン","Budapest":"ブダペスト",
+  "Bucharest":"ブカレスト","Sofia":"ソフィア","Belgrade":"ベオグラード","Zagreb":"ザグレブ",
+  "Ljubljana":"リュブリャナ","Bratislava":"ブラチスラバ","Istanbul":"イスタンブール","Ankara":"アンカラ",
+  "Izmir":"イズミル","Antalya":"アンタルヤ","Bodrum":"ボドルム","Cappadocia":"カッパドキア",
+  "Athens":"アテネ","Thessaloniki":"テッサロニキ","Mykonos":"ミコノス","Santorini":"サントリーニ",
+  "Crete":"クレタ","Rhodes":"ロードス","Copenhagen":"コペンハーゲン","Aarhus":"オーフス",
+  "Stockholm":"ストックホルム","Gothenburg":"ヨーテボリ","Malmo":"マルメ","Malmö":"マルメ",
+  "Oslo":"オスロ","Bergen":"ベルゲン","Stavanger":"スタヴァンゲル","Helsinki":"ヘルシンキ",
+  "Tampere":"タンペレ","Reykjavik":"レイキャビク","Tallinn":"タリン","Riga":"リガ","Vilnius":"ビリニュス",
+  "Moscow":"モスクワ","Petersburg":"サンクトペテルブルク","Kyiv":"キエフ","Kiev":"キエフ","Minsk":"ミンスク",
+  "Dubrovnik":"ドゥブロヴニク","Split":"スプリット","Sarajevo":"サラエボ","Tirana":"ティラナ",
+
+  // --- Asia ---
+  "Bangkok":"バンコク","Phuket":"プーケット","Pattaya":"パタヤ","Samui":"サムイ","Krabi":"クラビ",
+  "Chiang":"チェンマイ","ChiangMai":"チェンマイ","Hua":"ホアヒン","Koh":"サムイ",
+  "Seoul":"ソウル","Busan":"釜山","Jeju":"済州","Incheon":"仁川","Daegu":"大邱",
+  "Shanghai":"上海","Beijing":"北京","Guangzhou":"広州","Shenzhen":"深圳","Chengdu":"成都",
+  "Hangzhou":"杭州","Suzhou":"蘇州","Nanjing":"南京","Tianjin":"天津","Wuhan":"武漢",
+  "Xian":"西安","Xi'an":"西安","Sanya":"三亜","Chongqing":"重慶","Qingdao":"青島",
+  "Dalian":"大連","Shenyang":"瀋陽","Harbin":"ハルビン","Kunming":"昆明","Guilin":"桂林",
+  "Xiamen":"厦門","Fuzhou":"福州","Ningbo":"寧波","Wuxi":"無錫","Changsha":"長沙",
+  "Zhengzhou":"鄭州","Hefei":"合肥","Lhasa":"ラサ","Urumqi":"ウルムチ","Macau":"マカオ",
+  "Taipei":"台北","Kaohsiung":"高雄","Taichung":"台中","Tainan":"台南","Hsinchu":"新竹",
+  "Singapore":"シンガポール","Sentosa":"セントーサ","Manila":"マニラ","Cebu":"セブ",
+  "Boracay":"ボラカイ","Palawan":"パラワン","Davao":"ダバオ","Jakarta":"ジャカルタ",
+  "Bali":"バリ","Bandung":"バンドン","Surabaya":"スラバヤ","Yogyakarta":"ジョグジャカルタ",
+  "Lombok":"ロンボク","Ubud":"ウブド","Seminyak":"スミニャック","Nusa":"ヌサドゥア",
+  "Malaysia":"マレーシア","Penang":"ペナン","Langkawi":"ランカウイ","Kinabalu":"コタキナバル",
+  "Johor":"ジョホール","Malacca":"マラッカ","Melaka":"マラッカ","Kuching":"クチン",
+  "Hanoi":"ハノイ","Danang":"ダナン","Nang":"ダナン","Nha":"ニャチャン","Hoi":"ホイアン",
+  "Hue":"フエ","Phu":"フーコック","Phnom":"プノンペン","Siem":"シェムリアップ","Vientiane":"ビエンチャン",
+  "Luang":"ルアンパバーン","Yangon":"ヤンゴン","Mandalay":"マンダレー","Bagan":"バガン",
+  "Mumbai":"ムンバイ","Delhi":"デリー","Bangalore":"バンガロール","Bengaluru":"バンガロール",
+  "Hyderabad":"ハイデラバード","Chennai":"チェンナイ","Kolkata":"コルカタ","Goa":"ゴア",
+  "Jaipur":"ジャイプル","Udaipur":"ウダイプル","Agra":"アグラ","Pune":"プネ","Ahmedabad":"アーメダバード",
+  "Kochi":"コチ","Chandigarh":"チャンディーガル","Kathmandu":"カトマンズ","Pokhara":"ポカラ",
+  "Colombo":"コロンボ","Thimphu":"ティンプー","Paro":"パロ","Male":"マレ","Ulaanbaatar":"ウランバートル",
+
+  // --- Middle East ---
+  "Dubai":"ドバイ","Doha":"ドーハ","Riyadh":"リヤド","Jeddah":"ジッダ","Manama":"マナーマ",
+  "Muscat":"マスカット","Amman":"アンマン","Jerusalem":"エルサレム","Beirut":"ベイルート",
+  "Tehran":"テヘラン","Baghdad":"バグダッド","Damascus":"ダマスカス","Mecca":"メッカ","Medina":"メディナ",
+  "Sharjah":"シャールジャ","Ajman":"アジュマーン","Fujairah":"フジャイラ","Ras":"ラスアルハイマ",
+
+  // --- Africa ---
+  "Cairo":"カイロ","Alexandria":"アレクサンドリア","Luxor":"ルクソール","Hurghada":"フルガダ",
+  "Marrakech":"マラケシュ","Casablanca":"カサブランカ","Rabat":"ラバト","Fez":"フェズ","Agadir":"アガディール",
+  "Tangier":"タンジェ","Tunis":"チュニス","Algiers":"アルジェ","Nairobi":"ナイロビ","Mombasa":"モンバサ",
+  "Zanzibar":"ザンジバル","Johannesburg":"ヨハネスブルク","Durban":"ダーバン","Pretoria":"プレトリア",
+  "Accra":"アクラ","Lagos":"ラゴス","Abuja":"アブジャ","Dakar":"ダカール","Addis":"アディスアベバ",
+  "Kigali":"キガリ","Kampala":"カンパラ","Lusaka":"ルサカ","Harare":"ハラレ","Windhoek":"ウィントフック",
+
+  // --- Oceania ---
+  "Sydney":"シドニー","Melbourne":"メルボルン","Brisbane":"ブリスベン","Perth":"パース",
+  "Adelaide":"アデレード","Gold":"ゴールドコースト","Cairns":"ケアンズ","Darwin":"ダーウィン",
+  "Hobart":"ホバート","Canberra":"キャンベラ","Newcastle":"ニューキャッスル","Auckland":"オークランド",
+  "Wellington":"ウェリントン","Queenstown":"クイーンズタウン","Christchurch":"クライストチャーチ",
+  "Rotorua":"ロトルア","Nadi":"ナンディ","Suva":"スバ","Papeete":"パペーテ","Noumea":"ヌメア",
+
+  // --- Suffixes/token-only hits (best-effort single-token guesses) ---
+  "York":"ニューヨーク","Orleans":"ニューオーリンズ","Angeles":"ロサンゼルス","Francisco":"サンフランシスコ",
+  "Diego":"サンディエゴ","Jose":"サンノゼ","Antonio":"サンアントニオ","Vegas":"ラスベガス",
+  "Lake":"ソルトレイク","Salt":"ソルトレイク","City":"都市部","Louis":"セントルイス",
+  "Paul":"セントポール","Petersburg":"サンクトペテルブルク","Dhabi":"アブダビ","Lumpur":"クアラルンプール",
+  "Minh":"ホーチミン","Chi":"ホーチミン","Cabos":"ロスカボス","Cabo":"ロスカボス",
+  "Vallarta":"プエルトバジャルタ","Aires":"ブエノスアイレス","Paulo":"サンパウロ",
+  "Janeiro":"リオデジャネイロ","Horizonte":"ベロオリゾンテ","Penh":"プノンペン","Reap":"シェムリアップ",
+  "Prabang":"ルアンパバーン","Chi-Minh":"ホーチミン",
+};
+
+/* Generic tokens the inference picked up as "cities" but aren't places.
+   Merge these into "（その他）" bucket for the country. */
+const GENERIC_CITY_TOKENS = new Set([
+  "University","Northwest","Northeast","Southwest","Southeast","North","South","East","West",
+  "Fort","Port","Cape","Bay","Beach","Coast","Harbor","Harbour","Springs","Spring",
+  "Downtown","Uptown","Midtown","Historic","Medical","Medical.","Riverside","Riverfront",
+  "Oceanfront","Bayfront","Waterfront","Hillside","Parkside","Seaside","Lakeside",
+  "Central","Metro","Metropolitan","County","Country","Countryside","Area","District",
+  "Quarter","Region","Village","Gateway","Airport","Convention","Expo","Exhibition",
+  "Hills","Hill","Valley","Vista","View","Views","Point","Pointe","Place",
+  "Square","Plaza","Center","Centre","Galleria","Marina","Park","Gardens","Garden",
+  "Lake","Lakes","River","Rivers","Forest","Woods","Highlands","Heights","Ridge",
+  "Grove","Meadows","Meadow","Canyon","Creek","Falls","Junction","Crossing",
+  "Inclusive","Vacation","Vacations","Resort","Resorts","Hotel","Hotels","Suites","Suite",
+  "Club","Clubs","Spa","Villa","Villas","Apartments","Apartment","Tower","Towers",
+  "Grande","Grand","Royal","Imperial","Premier","Premium","Select","Classic","Executive",
+  "Heritage","Legacy","Signature","Portfolio","Collection","Tribute",
+  "Casino","Entertainment","Stadium","College","Medical","Business","Financial",
+  "All","Ain","Can","Saint","Mount","Port","Fort","Pass","Brook","Cross",
+  "Rock","Green","White","Old","New","Upper","Lower","Long","Little","Big",
+  "Marquis","Liberty","Independence","Patriot","Pioneer",
+  "Rapids","Shores","Shore","Prairie","Plains","Pines","Palms","Trails","Trail",
+  "Boulevard","Avenue","Street","Road","Drive","Lane","Way","Parkway",
+  "Campus","Complex","Station","Depot","Terminal",
+  "International","National","Regional","Global","Worldwide",
+]);
+
+function prettifyCity(key) {
+  if (!key) return "（その他）";
+  if (key === "(全ホテル)") return "（全ホテル）";
+  if (CITY_DISPLAY[key]) return CITY_DISPLAY[key];
+  // 3-letter marsha-prefix fallback (TYO, HKG, LAX, ...)
+  if (/^[A-Z]{3}$/.test(key)) return "（その他）";
+  if (GENERIC_CITY_TOKENS.has(key)) return "（その他）";
+  return key; // leave English as-is (still readable)
+}
+
+function mergeCityGroups(rawCities) {
+  // rawCities: { rawKey: [[name, marsha, url], ...] }
+  const groups = {}; // displayName -> { hotels: [], seen: Set<marsha> }
+  for (const key of Object.keys(rawCities)) {
+    const display = prettifyCity(key);
+    if (!groups[display]) groups[display] = { hotels: [], seen: new Set() };
+    for (const h of rawCities[key]) {
+      const marsha = h[1];
+      if (groups[display].seen.has(marsha)) continue;
+      groups[display].seen.add(marsha);
+      groups[display].hotels.push(h);
+    }
+  }
+  // Sort hotels inside each group by name
+  for (const g of Object.values(groups)) {
+    g.hotels.sort((a, b) => a[0].localeCompare(b[0], "ja"));
+  }
+  // Return plain map displayName -> hotels array
+  const out = {};
+  for (const [k, v] of Object.entries(groups)) out[k] = v.hotels;
+  return out;
+}
+
+/* ==== DEFAULT HISTORY ==== */
+const HISTORY_DEFAULT = [
+  { ci: "2026-09-19", co: "2026-09-21", hotel: "Hotel the Mitsui Kyoto",                                             points: 264000, price: 438323,   comparison: false },
+  { ci: "2025-12-22", co: "2025-12-27", hotel: "JWマリオット・モルディブ・カーフ・アトール・アイランド・リゾート",     points: 472000, price: 2264755,  comparison: false },
+  { ci: "2025-12-20", co: "2025-12-22", hotel: "Wシンガポール・セントーサ",                                             points: 136000, price: 282252,   comparison: false },
+  { ci: "2025-12-20", co: "2025-12-22", hotel: "セントレジス・シンガポール",                                             points: 121000, price: 150198,   comparison: true  },
+  { ci: "2025-12-20", co: "2025-12-22", hotel: "ザ・シンガポール・エディション",                                           points: 140000, price: 164666,   comparison: true  },
+  { ci: "2025-12-06", co: "2025-12-07", hotel: "京都ウェスティン",                                                     points: 60000,  price: 114167,   comparison: false },
+  { ci: "2025-12-05", co: "2025-12-06", hotel: "京都ウェスティン",                                                     points: 55000,  price: 114167,   comparison: false },
+  { ci: "2025-07-25", co: "2025-07-27", hotel: "The St. Regis Chicago",                                                points: 179000, price: 276663,   comparison: false },
+  { ci: "2024-12-18", co: "2024-12-23", hotel: "Seaside Finolhu Baa Atoll",                                            points: 358000, price: 668059,   comparison: false },
+  { ci: "2022-12-19", co: "2022-12-25", hotel: "JWモルディヴ",                                                         points: 500000, price: 2977934,  comparison: false },
+  { ci: "2022-09-23", co: "2022-09-25", hotel: "京都ウェスティン",                                                     points: 120000, price: 195545,   comparison: false },
+  { ci: "2022-08-26", co: "2022-08-28", hotel: "京都ウェスティン",                                                     points: 50000,  price: 103074,   comparison: false }
+];
+const HISTORY_KEY = "marriott-history-v1";
+
+const state = {
+  adults: 2, children: 2, childrenAges: [9, 5],
+  region: "", country: "", city: "", hotel: null,
+  checkin: "", checkout: "",
+  history: []
+};
+const WEEKDAYS_JA = ["日","月","火","水","木","金","土"];
+const $ = (id) => document.getElementById(id);
+
+/* ==== FORMATTERS ==== */
+function formatJPY(n) { return Number.isFinite(n) ? "¥" + Math.round(n).toLocaleString("ja-JP") : "—"; }
+function formatPoints(n) { return Number.isFinite(n) ? Math.round(n).toLocaleString("ja-JP") + "pt" : "—"; }
+function formatYenPerPt(n) { return Number.isFinite(n) ? n.toFixed(2) : "—"; }
+function toISODate(d) { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
+function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function formatDateJa(iso, opts = {}) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d)) return iso;
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const w = WEEKDAYS_JA[d.getDay()];
+  return opts.compact ? `${m}/${day}(${w})` : `${y}/${m}/${day}(${w})`;
+}
+function valueTier(yenPerPt) {
+  if (!Number.isFinite(yenPerPt) || yenPerPt <= 0) return "none";
+  if (yenPerPt >= 2.0) return "excellent";
+  if (yenPerPt >= 1.5) return "good";
+  if (yenPerPt >= 1.0) return "ok";
+  return "low";
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ==== DATES & STAY CHIP ==== */
+function initDates() {
+  const today = new Date();
+  const t1 = new Date(today); t1.setDate(today.getDate() + 1);
+  const t2 = new Date(today); t2.setDate(today.getDate() + 2);
+  $("checkin").value = toISODate(t1);
+  $("checkout").value = toISODate(t2);
+  $("checkin").min = toISODate(today);
+  $("checkout").min = toISODate(t2);
+  state.checkin = $("checkin").value;
+  state.checkout = $("checkout").value;
+  updateStayChip();
+}
+function updateStayChip() {
+  const n = daysBetween(state.checkin, state.checkout);
+  const badge = $("nights-badge");
+  if (state.checkin && state.checkout && n > 0) {
+    badge.hidden = false;
+    $("nights-count").textContent = n;
+  } else badge.hidden = true;
+  updateDateWd();
+}
+function updateDateWd() {
+  const fmt = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso + "T00:00:00");
+    if (isNaN(d)) return iso;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const w = WEEKDAYS_JA[d.getDay()];
+    return `${y}/${m}/${day}(${w})`;
+  };
+  const a = $("checkin-display"), b = $("checkout-display");
+  if (a) a.textContent = fmt(state.checkin);
+  if (b) b.textContent = fmt(state.checkout);
+}
+
+/* ==== COUNTERS ==== */
+function initCounters() {
+  document.querySelectorAll(".counter").forEach((el) => {
+    const key = el.dataset.counter;
+    const min = parseInt(el.dataset.min, 10), max = parseInt(el.dataset.max, 10);
+    el.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = state[key] + parseInt(btn.dataset.delta, 10);
+        if (next < min || next > max) return;
+        state[key] = next;
+        $(`${key}-value`).textContent = next;
+        if (key === "children") syncChildrenAges();
+        updateMarriottLink();
+      });
+    });
+  });
+}
+function syncChildrenAges() {
+  const c = $("children-ages");
+  c.innerHTML = "";
+  while (state.childrenAges.length < state.children) state.childrenAges.push(5);
+  state.childrenAges.length = state.children;
+  if (state.children === 0) { c.classList.add("hidden"); return; }
+  c.classList.remove("hidden");
+  state.childrenAges.forEach((age, idx) => {
+    const chip = document.createElement("div");
+    chip.className = "age-field";
+    chip.innerHTML = `<label for="child-age-${idx}">子${idx+1}</label><input id="child-age-${idx}" type="number" inputmode="numeric" min="0" max="17" value="${age}">`;
+    chip.querySelector("input").addEventListener("input", (e) => {
+      const v = parseInt(e.target.value, 10);
+      state.childrenAges[idx] = Number.isFinite(v) ? Math.max(0, Math.min(17, v)) : 0;
+      updateMarriottLink();
+    });
+    c.appendChild(chip);
+  });
+}
+
+/* ==== CASCADING DROPDOWNS ==== */
+function populateRegions() {
+  const sel = $("region-select");
+  Object.keys(REGIONS).forEach((r) => { const o = document.createElement("option"); o.value=r; o.textContent=r; sel.appendChild(o); });
+}
+function resetSelect(sel, placeholder) { sel.innerHTML = `<option value="">${placeholder}</option>`; sel.disabled = true; }
+function fillSelect(sel, items) {
+  sel.innerHTML = `<option value="">選択してください</option>`;
+  items.forEach((v) => { const o = document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); });
+  sel.disabled = false;
+}
+function fillHotelSelect(hotels) {
+  const sel = $("hotel-select");
+  sel.innerHTML = `<option value="">選択してください</option>`;
+  hotels.forEach((h, idx) => {
+    const o = document.createElement("option");
+    o.value = String(idx); o.textContent = h[0];
+    sel.appendChild(o);
+  });
+  sel.disabled = false;
+}
+function updateHotelCount() {
+  const badge = $("hotel-count-badge");
+  if (!badge) return;
+  if (state.region && state.country) {
+    const cities = REGIONS[state.region]?.[state.country] || {};
+    const total = Object.values(cities).reduce((a, c) => a + (c.length || 0), 0);
+    badge.textContent = total ? `(${state.country} · ${total}軒)` : "";
+  } else badge.textContent = "";
+}
+function onRegionChange() {
+  state.region = $("region-select").value; state.country = ""; state.city = ""; state.hotel = null;
+  currentHotels = []; currentCityGroups = {};
+  if (!state.region) {
+    resetSelect($("country-select"),"先に地域を選択");
+    resetSelect($("city-select"),"先に国を選択");
+    resetSelect($("hotel-select"),"先に都市を選択");
+  } else {
+    const countries = Object.keys(REGIONS[state.region]).sort((a,b) => a.localeCompare(b, "ja"));
+    fillSelect($("country-select"), countries);
+    resetSelect($("city-select"),"先に国を選択");
+    resetSelect($("hotel-select"),"先に都市を選択");
+  }
+  updateHotelCount(); updateMarriottLink();
+}
+function onCountryChange() {
+  state.country = $("country-select").value; state.city = ""; state.hotel = null;
+  currentHotels = []; currentCityGroups = {};
+  if (!state.country) {
+    resetSelect($("city-select"),"先に国を選択");
+    resetSelect($("hotel-select"),"先に都市を選択");
+  } else {
+    const rawCities = REGIONS[state.region][state.country] || {};
+    currentCityGroups = mergeCityGroups(rawCities);
+    // Sort: "（その他）" & "（全ホテル）" last, everything else by hotel count desc then name
+    const entries = Object.entries(currentCityGroups);
+    const isTail = (name) => name === "（その他）" || name === "（全ホテル）";
+    entries.sort((a, b) => {
+      const ta = isTail(a[0]), tb = isTail(b[0]);
+      if (ta !== tb) return ta ? 1 : -1;
+      return (b[1].length - a[1].length) || a[0].localeCompare(b[0], "ja");
+    });
+    const sel = $("city-select");
+    sel.innerHTML = `<option value="">選択してください</option>`;
+    entries.forEach(([name, hotels]) => {
+      const o = document.createElement("option");
+      o.value = name; o.textContent = `${name} (${hotels.length})`;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+    resetSelect($("hotel-select"),"先に都市を選択");
+  }
+  updateHotelCount(); updateMarriottLink();
+}
+function onCityChange() {
+  state.city = $("city-select").value; state.hotel = null;
+  if (!state.city) {
+    currentHotels = [];
+    resetSelect($("hotel-select"),"先に都市を選択");
+  } else {
+    currentHotels = currentCityGroups[state.city] || [];
+    fillHotelSelect(currentHotels);
+  }
+  updateMarriottLink();
+}
+function onHotelChange() {
+  const idx = parseInt($("hotel-select").value, 10);
+  state.hotel = Number.isFinite(idx) ? currentHotels[idx] : null;
+  updateMarriottLink();
+}
+
+/* ==== MARRIOTT AVAILABILITY URL (honors dates/guests/points) ==== */
+function updateMarriottLink() {
+  const link = $("marriott-link");
+  if (!state.hotel || !Array.isArray(state.hotel)) {
+    link.setAttribute("aria-disabled", "true"); link.href = "#";
+    link.textContent = "🔗 ホテルを選択するとリンクが有効になります";
+    return;
+  }
+  link.removeAttribute("aria-disabled");
+  const [name, marsha] = state.hotel;
+  const toMDY = (iso) => {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+    const [y, m, d] = iso.split("-");
+    return `${m}/${d}/${y}`;
+  };
+  const params = new URLSearchParams();
+  params.set("isSearch", "false");
+  params.set("propertyCode", marsha);
+  const fd = toMDY(state.checkin), td = toMDY(state.checkout);
+  if (fd) params.set("fromDate", fd);
+  if (td) params.set("toDate", td);
+  params.set("isRateCalendar", "false");
+  params.set("costView", "AVG");
+  params.set("flexibleDateSearch", "false");
+  params.set("numberOfRooms", "1");
+  params.set("numberOfAdults", String(state.adults));
+  params.set("numberOfChildren", String(state.children || 0));
+  if (state.children > 0) {
+    params.set("childrenAges", state.childrenAges.join(","));
+  }
+  params.set("useRewardsPoints", "true");
+  params.set("clusterCode", "none");
+  link.href = `https://www.marriott.com/reservation/availabilitySearch.mi?${params.toString()}`;
+  link.textContent = `🔗 「${name}」の空室・レート検索`;
+}
+
+/* ==== FX LIVE ==== */
+async function fetchLiveFx() {
+  const btn = $("fx-refresh"), status = $("fx-status");
+  btn.disabled = true;
+  status.className = "fx-status";
+  status.textContent = "最新レート取得中…";
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/JPY", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (data.result !== "success") throw new Error("API error");
+    window.__FX_LIVE__ = { rates: data.rates, updated: data.time_last_update_utc };
+    applyLiveFx($("currency-select").value);
+    const dt = data.time_last_update_utc ? new Date(data.time_last_update_utc) : new Date();
+    status.className = "fx-status live";
+    status.textContent = `ライブレート取得: ${dt.toLocaleString("ja-JP", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })}`;
+  } catch (e) {
+    status.className = "fx-status stale";
+    status.textContent = "取得失敗 — 手動入力可 (" + e.message + ")";
+  } finally { btn.disabled = false; }
+}
+function applyLiveFx(currency) {
+  const live = window.__FX_LIVE__;
+  if (!live) return;
+  if (currency === "JPY") { $("fx-rate").value = "1"; calculate(); return; }
+  const r = live.rates[currency];
+  if (Number.isFinite(r) && r > 0) { $("fx-rate").value = (1 / r).toFixed(4); calculate(); }
+}
+function onCurrencyChange() {
+  const cur = $("currency-select").value;
+  $("fx-from-label").textContent = cur;
+  document.querySelectorAll("[data-fx-suffix]").forEach((el) => { el.textContent = cur; });
+  if (window.__FX_LIVE__) applyLiveFx(cur);
+  calculate();
+}
+
+/* ==== CALCULATION ==== */
+function valueCellHtml(yenValue, label, tier) {
+  const cls = tier || valueTier(yenValue);
+  const txt = Number.isFinite(yenValue) && yenValue > 0 ? formatYenPerPt(yenValue) : "—";
+  return `<div class="value-cell value-${cls}"><span class="vc-label">${label}</span><span class="vc-num">${txt}<span class="vc-unit">円</span></span></div>`;
+}
+function calculate() {
+  const cashOnly = parseFloat($("cash-only").value);
+  const cpCash = parseFloat($("cp-cash").value);
+  const cpPoints = parseFloat($("cp-points").value);
+  const pointsOnly = parseFloat($("points-only").value);
+  const fx = parseFloat($("fx-rate").value);
+  const cur = $("currency-select").value;
+  const body = $("results-body");
+
+  if (!Number.isFinite(fx) || fx <= 0) { body.innerHTML = `<div class="results-empty">為替レートを入力してください。</div>`; return; }
+  if (!Number.isFinite(cashOnly) || cashOnly <= 0) { body.innerHTML = `<div class="results-empty">① キャッシュオンリー価格を入力すると計算が始まります。</div>`; return; }
+
+  const opt1JPY = cashOnly * fx;
+  let opt2Valid = Number.isFinite(cpCash) && Number.isFinite(cpPoints) && cpPoints > 0 && cpCash >= 0;
+  let opt2PerPt = null, opt2CashJPY = null, opt2Diff = null, opt2Per100 = null, opt2Tier = "none";
+  if (opt2Valid) {
+    opt2CashJPY = cpCash * fx;
+    opt2Diff = (cashOnly - cpCash) * fx;
+    opt2PerPt = opt2Diff / cpPoints;
+    opt2Per100 = opt2PerPt * 3;
+    opt2Tier = valueTier(opt2PerPt);  // tier derived from 1pt value
+  }
+  let opt3Valid = Number.isFinite(pointsOnly) && pointsOnly > 0;
+  let opt3PerPt = null, opt3Per100 = null, opt3Tier = "none";
+  if (opt3Valid) { opt3PerPt = opt1JPY / pointsOnly; opt3Per100 = opt3PerPt * 3; opt3Tier = valueTier(opt3PerPt); }
+
+  // BEST は 1pt ≥ 1.5円 のときだけ推奨。それ未満ならキャッシュ払い推奨 (ポイント温存)。
+  const RECOMMEND_THRESHOLD = 1.5;
+  let winner = null;
+  const cands = [];
+  if (Number.isFinite(opt2PerPt) && opt2PerPt >= RECOMMEND_THRESHOLD) cands.push({ key: "opt2", val: opt2PerPt });
+  if (Number.isFinite(opt3PerPt) && opt3PerPt >= RECOMMEND_THRESHOLD) cands.push({ key: "opt3", val: opt3PerPt });
+  if (cands.length) winner = cands.reduce((a,b) => a.val >= b.val ? a : b).key;
+
+  const card1 = `
+    <div class="result-card">
+      <div class="rhead">
+        <div class="rhead-left"><span class="rhead-num">1</span><span class="rhead-title">キャッシュオンリー</span></div>
+        <span class="rhead-total">${formatJPY(opt1JPY)}</span>
+      </div>
+      <div class="rmeta">${cashOnly.toLocaleString("ja-JP")} ${cur} × ${fx.toLocaleString("ja-JP")} 円</div>
+    </div>`;
+
+  const card2 = opt2Valid ? `
+    <div class="result-card ${winner === "opt2" ? "winner" : ""}">
+      <div class="rhead">
+        <div class="rhead-left"><span class="rhead-num">2</span><span class="rhead-title">キャッシュ + ポイント</span>${winner==="opt2"?'<span class="rhead-badge">BEST</span>':""}</div>
+      </div>
+      <div class="rmeta">現金 <strong>${formatJPY(opt2CashJPY)}</strong> + <strong>${formatPoints(cpPoints)}</strong> · 差額 <strong>${formatJPY(opt2Diff)}</strong></div>
+      <div class="value-cells">
+        ${valueCellHtml(opt2PerPt, "1pt価値", opt2Tier)}
+        ${valueCellHtml(opt2Per100, "100円利用時", opt2Tier)}
+      </div>
+    </div>` : `
+    <div class="result-card">
+      <div class="rhead"><div class="rhead-left"><span class="rhead-num">2</span><span class="rhead-title">キャッシュ + ポイント</span></div></div>
+      <div class="rmeta" style="color:var(--c-text-subtle)">現金・ポイント部分を入力</div>
+    </div>`;
+
+  const card3 = opt3Valid ? `
+    <div class="result-card ${winner === "opt3" ? "winner" : ""}">
+      <div class="rhead">
+        <div class="rhead-left"><span class="rhead-num">3</span><span class="rhead-title">ポイントオンリー</span>${winner==="opt3"?'<span class="rhead-badge">BEST</span>':""}</div>
+      </div>
+      <div class="rmeta">${formatJPY(opt1JPY)} ÷ <strong>${formatPoints(pointsOnly)}</strong></div>
+      <div class="value-cells">
+        ${valueCellHtml(opt3PerPt, "1pt価値", opt3Tier)}
+        ${valueCellHtml(opt3Per100, "100円利用時", opt3Tier)}
+      </div>
+    </div>` : `
+    <div class="result-card">
+      <div class="rhead"><div class="rhead-left"><span class="rhead-num">3</span><span class="rhead-title">ポイントオンリー</span></div></div>
+      <div class="rmeta" style="color:var(--c-text-subtle)">ポイント数を入力</div>
+    </div>`;
+
+  let summary = "";
+  if (winner) {
+    const best = winner === "opt2" ? { label:"Option 2", perPt: opt2PerPt } : { label:"Option 3", perPt: opt3PerPt };
+    const j = best.perPt >= 2.0 ? "◎ 積極的にポイント利用すべき水準。" : "○ ポイント利用が有利。";
+    summary = `<div class="summary-box">💡 <strong>${best.label}</strong> が推奨: <strong>${formatYenPerPt(best.perPt)}円/pt</strong> (100円利用時 = <strong>${formatYenPerPt(best.perPt*3)}円</strong>) ${j}</div>`;
+  } else if (opt2Valid || opt3Valid) {
+    // どの選択肢も 1.5円/pt を下回った場合: ポイント温存 + 現金払い推奨
+    const bestPerPt = Math.max(Number.isFinite(opt2PerPt) ? opt2PerPt : -Infinity,
+                               Number.isFinite(opt3PerPt) ? opt3PerPt : -Infinity);
+    const bestTxt = Number.isFinite(bestPerPt) && bestPerPt > 0 ? `${formatYenPerPt(bestPerPt)}円/pt` : "—";
+    summary = `<div class="summary-box">💰 <strong>現金払い推奨</strong>: ポイント価値が 1.5円/pt 未満 (最良でも ${bestTxt})。ポイントは温存してキャッシュで支払うのが有利。</div>`;
+  }
+  body.innerHTML = `<div class="result-grid">${card1}${card2}${card3}</div>${summary}`;
+}
+
+/* ==== HISTORY ==== */
+function loadHistory() {
+  try { const raw = localStorage.getItem(HISTORY_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) { state.history = arr; return; } } } catch (e) {}
+  state.history = HISTORY_DEFAULT.slice();
+}
+function saveHistory() { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history)); } catch (e) {} }
+function sortHistory() { state.history.sort((a, b) => (b.ci || "").localeCompare(a.ci || "")); }
+
+function renderHistory() {
+  sortHistory();
+  const list = $("history-list");
+  list.innerHTML = "";
+  let totalPts = 0, totalYen = 0, usedCount = 0;
+  state.history.forEach((entry, idx) => {
+    const nights = daysBetween(entry.ci, entry.co);
+    const perPt = (entry.points > 0 && entry.price > 0) ? (entry.price / entry.points) : 0;
+    const per100 = perPt * 3;
+    const tier = valueTier(perPt);  // single tier for both cells
+    const ptTxt = perPt > 0 ? formatYenPerPt(perPt) : "—";
+    const p100Txt = per100 > 0 ? formatYenPerPt(per100) : "—";
+    const row = document.createElement("div");
+    row.className = "history-row" + (entry.comparison ? " comparison" : "");
+    const dateText = `${formatDateJa(entry.ci)}→${formatDateJa(entry.co,{compact:true})}`;
+    const nightsCell = nights > 0 ? `<span class="nights-mini">${nights}泊</span>` : "";
+    const hotelText = entry.comparison
+      ? `<span class="h-cmp-flag">比較</span> ${escapeHtml(entry.hotel || "")}`
+      : escapeHtml(entry.hotel || "");
+    const valueCells = perPt > 0
+      ? `<span class="vc-mini value-${tier}">${ptTxt}</span><span class="vc-mini value-${tier}">${p100Txt}</span>`
+      : `<span class="h-points-only">ポイント利用</span>`;
+    row.innerHTML = `
+      <span class="h-dates">${dateText}</span>
+      <span class="h-nights-slot">${nightsCell}</span>
+      <span class="h-hotel">${hotelText}</span>
+      <span class="h-nums-compact"><strong>${formatPoints(entry.points)}</strong> / <strong>${formatJPY(entry.price)}</strong></span>
+      ${valueCells}`;
+    list.appendChild(row);
+    if (!entry.comparison && perPt > 0) { totalPts += entry.points || 0; totalYen += entry.price || 0; usedCount++; }
+  });
+  const avg = totalPts > 0 ? totalYen / totalPts : 0;
+  $("history-stats").innerHTML = usedCount
+    ? `実績${usedCount}件 · 累計 <strong>${formatPoints(totalPts)}</strong> → <strong>${formatJPY(totalYen)}</strong> · 平均 <strong>${formatYenPerPt(avg)}円/pt</strong>`
+    : "履歴未登録";
+}
+
+/* ==== OCR (Tesseract.js dynamic load) ==== */
+const TESSERACT_CDN = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if ([...document.scripts].some(s => s.src === src)) return resolve();
+    const s = document.createElement("script");
+    s.src = src; s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("スクリプト読込失敗"));
+    document.head.appendChild(s);
+  });
+}
+
+function setOcrStatus(text, cls) {
+  const el = $("ocr-status");
+  el.hidden = !text;
+  el.textContent = text || "";
+  el.className = "ocr-status" + (cls ? " " + cls : "");
+}
+
+function resetOcrUI() {
+  $("ocr-text").hidden = true;
+  $("ocr-actions").hidden = true;
+  $("ocr-file").value = "";
+}
+
+async function runOcr(file) {
+  setOcrStatus("ライブラリ読込中…（初回のみ ~4MB）", "");
+  try {
+    await loadScript(TESSERACT_CDN);
+    if (!window.Tesseract) throw new Error("Tesseract が初期化されていません");
+    setOcrStatus("OCR処理中…（初回は日本語辞書 ~12MB ダウンロード）", "");
+    const { data } = await window.Tesseract.recognize(file, "jpn+eng", {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          setOcrStatus(`認識中 ${Math.round((m.progress || 0) * 100)}%`, "");
+        } else if (m.status) {
+          setOcrStatus(m.status, "");
+        }
+      },
+    });
+    const text = (data && data.text || "").trim();
+    $("ocr-text").value = text;
+    $("ocr-text").hidden = false;
+    $("ocr-actions").hidden = false;
+    const parsed = parseMarriottRates(text, daysBetween(state.checkin, state.checkout));
+    const fmt = (n) => Number(n).toLocaleString("ja-JP");
+    const parts = [];
+    parts.push(`①キャッシュオンリー：${parsed.cashOnly != null ? fmt(parsed.cashOnly) + "円" : "該当なし"}`);
+    parts.push(`②キャッシュ＋ポイント：${(parsed.cpCash != null && parsed.cpPoints != null) ? `${fmt(parsed.cpCash)}円 + ${fmt(parsed.cpPoints)}pt` : "該当なし"}`);
+    parts.push(`③ポイントオンリー：${parsed.pointsOnly != null ? fmt(parsed.pointsOnly) + "pt" : "該当なし"}`);
+    const foundAny = parsed.cashOnly != null || parsed.pointsOnly != null || (parsed.cpCash != null && parsed.cpPoints != null);
+    setOcrStatus(
+      foundAny
+        ? `検出結果（確認して「反映」）\n${parts.join("\n")}`
+        : "数値検出できず。テキスト修正して「反映」",
+      foundAny ? "ok" : "err"
+    );
+  } catch (e) {
+    setOcrStatus("エラー: " + e.message, "err");
+  }
+}
+
+/**
+ * Parse OCR'd Marriott rate text into { cashOnly?, cpCash?, cpPoints?, pointsOnly? }.
+ *
+ * Strategy:
+ *   1. Strip date patterns ("Apr 22, 2028") so they don't become numeric candidates.
+ *   2. Extract combo (cash + points) from the literal "A + B" pattern.
+ *   3. Classify remaining numbers by nearby keywords (points / Stay / JPY / night / Member).
+ *   4. Points-only = largest of points-context hits, or largest leftover if ambiguous.
+ *   5. Cash-only = smallest of cash-context hits → prefers Member Rate over Non-Member.
+ *
+ * Handles very noisy OCR (junk words between numbers, mangled keywords) by leaning
+ * on the max/min heuristic when keyword context is unavailable.
+ */
+function parseMarriottRates(text, nights) {
+  const out = {};
+  if (!text) return out;
+  nights = Number.isFinite(nights) && nights > 0 ? nights : 1;
+
+  // 1. Remove date-like substrings so things like "Apr 22, 2028" don't parse as 22202.
+  const cleaned = text.replace(
+    /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[a-z]*\s+\d{1,2},?\s*\d{2,4}\b/gi,
+    " "
+  );
+
+  // 2. Collect number tokens ≥ 1000 (rates & points are always in the thousands).
+  //    Thousand separator is "," or "." only — NOT space, because Marriott lays out
+  //    multiple rates on one line like "266,000 209,000" where the space must split them.
+  const numRe = /\d{1,3}(?:[,.]\d{3})+(?:\.\d+)?/g;
+  const nums = [];
+  let m;
+  while ((m = numRe.exec(cleaned)) !== null) {
+    const n = parseFloat(m[0].replace(/[,.]/g, ""));
+    if (Number.isFinite(n) && n >= 1000) nums.push({ val: n, idx: m.index });
+  }
+  if (!nums.length) return out;
+
+  // 3. Combo (cash + points) via the literal "A + B" pattern.
+  const comboMatch = cleaned.match(
+    /(\d{1,3}(?:[,.]\d{3})+(?:\.\d+)?)\s*\+\s*(\d{1,3}(?:[,.]\d{3})+(?:\.\d+)?)/
+  );
+  const usedIdx = new Set();
+  if (comboMatch) {
+    const aVal = parseFloat(comboMatch[1].replace(/[,.]/g, ""));
+    const bVal = parseFloat(comboMatch[2].replace(/[,.]/g, ""));
+    if (Number.isFinite(aVal) && Number.isFinite(bVal) && aVal > 0 && bVal > 0) {
+      out.cpCash = aVal;
+      out.cpPoints = bVal;
+      let needA = true, needB = true;
+      for (const nm of nums) {
+        if (usedIdx.has(nm.idx)) continue;
+        if (needA && nm.val === aVal) { usedIdx.add(nm.idx); needA = false; }
+        else if (needB && nm.val === bVal) { usedIdx.add(nm.idx); needB = false; }
+        if (!needA && !needB) break;
+      }
+    }
+  }
+  let remaining = nums.filter(x => !usedIdx.has(x.idx));
+  if (!remaining.length) return out;
+
+  // 4. Context markers (window around each number).
+  const lcleaned = cleaned.toLowerCase();
+  const context = (idx, w = 30) =>
+    lcleaned.slice(Math.max(0, idx - w), Math.min(lcleaned.length, idx + w));
+  const near = (idx, str, w = 20) => {
+    const s = Math.max(0, idx - w);
+    const e = Math.min(lcleaned.length, idx + w + String(idx).length);
+    return lcleaned.slice(s, e).includes(str);
+  };
+
+  // Cash markers: ¥/￥/\ (OCR often maps ¥ to backslash on jp Windows fonts) immediately
+  // before the number, or JPY/円/合計金額 within short window.
+  const isCashMarked = (x) => {
+    const before = cleaned.slice(Math.max(0, x.idx - 6), x.idx);
+    if (/[¥￥\\]\s*$/.test(before)) return true;
+    const ctx = context(x.idx, 25);
+    return /jpy|円|合計|金額/.test(ctx);
+  };
+  // Points markers: ポイント / points / pts / pt nearby.
+  const isPtsMarked = (x) => /ポイント|points?|\bpts?\b/i.test(cleaned.slice(
+    Math.max(0, x.idx - 25), Math.min(cleaned.length, x.idx + 30)
+  ));
+  // Earned-points noise (Japanese "獲得" = earned): skip these entirely.
+  const isEarnedNoise = (x) => /獲得/.test(cleaned.slice(
+    Math.max(0, x.idx - 25), Math.min(cleaned.length, x.idx + 20)
+  ));
+
+  remaining = remaining.filter(x => !isEarnedNoise(x));
+  if (!remaining.length) return out;
+
+  const cashCands = remaining.filter(isCashMarked);
+  const ptsCands  = remaining.filter(x => !isCashMarked(x) && isPtsMarked(x));
+  const unknown   = remaining.filter(x => !isCashMarked(x) && !isPtsMarked(x));
+
+  // 5. Cash-only: prefer explicit cash markers, then detect per-night/total pair.
+  const pickCashTotal = (arr) => {
+    if (!arr.length) return null;
+    const vals = arr.map(x => x.val);
+    if (nights >= 2 && arr.length >= 2) {
+      // Look for a pair (a, b) where b ≈ a * nights (±2% tolerance).
+      const sorted = vals.slice().sort((a, b) => a - b);
+      for (let i = 0; i < sorted.length; i++) {
+        for (let j = i + 1; j < sorted.length; j++) {
+          const expected = sorted[i] * nights;
+          if (Math.abs(sorted[j] - expected) / expected < 0.02) {
+            return sorted[j]; // pick the total
+          }
+        }
+      }
+    }
+    // No per-night/total relationship → pick MIN (prefer Member Rate over Non-Member).
+    return Math.min(...vals);
+  };
+
+  if (cashCands.length) {
+    out.cashOnly = pickCashTotal(cashCands);
+  }
+
+  // 6. Points-only: prefer explicit points markers; else fallback to unknown pool.
+  if (ptsCands.length) {
+    out.pointsOnly = Math.max(...ptsCands.map(x => x.val));
+  } else if (!cashCands.length && unknown.length >= 2) {
+    // No cash markers AND multiple unknowns → largest is likely points (old heuristic).
+    out.pointsOnly = Math.max(...unknown.map(x => x.val));
+    const hitIdx = unknown.find(x => x.val === out.pointsOnly).idx;
+    unknown.splice(unknown.findIndex(x => x.idx === hitIdx), 1);
+  } else if (unknown.length === 1 && cashCands.length) {
+    // One unknown + cash markers present → unknown is likely points.
+    out.pointsOnly = unknown[0].val;
+  }
+
+  // 7. If cashOnly still unset but we have unknowns, fall back.
+  if (out.cashOnly == null && unknown.length) {
+    out.cashOnly = pickCashTotal(unknown);
+  }
+
+  return out;
+}
+
+function applyOcrText() {
+  const text = $("ocr-text").value;
+  const parsed = parseMarriottRates(text, daysBetween(state.checkin, state.checkout));
+  if (parsed.cashOnly != null) $("cash-only").value = parsed.cashOnly;
+  if (parsed.cpCash != null) $("cp-cash").value = parsed.cpCash;
+  if (parsed.cpPoints != null) $("cp-points").value = parsed.cpPoints;
+  if (parsed.pointsOnly != null) $("points-only").value = parsed.pointsOnly;
+  calculate();
+  resetOcrUI();
+  setOcrStatus("✓ 3レートに反映しました", "ok");
+  setTimeout(() => setOcrStatus("", ""), 3000);
+}
+
+/* ==== INIT ==== */
+function init() {
+  initDates();
+  initCounters();
+  syncChildrenAges();
+  populateRegions();
+  loadHistory();
+  renderHistory();
+
+  $("checkin").addEventListener("change", (e) => {
+    state.checkin = e.target.value;
+    if (state.checkout && state.checkin >= state.checkout) {
+      const d = new Date(state.checkin); d.setDate(d.getDate() + 1);
+      state.checkout = toISODate(d); $("checkout").value = state.checkout;
+    }
+    updateStayChip(); updateMarriottLink();
+  });
+  $("checkout").addEventListener("change", (e) => { state.checkout = e.target.value; updateStayChip(); updateMarriottLink(); });
+  $("region-select").addEventListener("change", onRegionChange);
+  $("country-select").addEventListener("change", onCountryChange);
+  $("city-select").addEventListener("change", onCityChange);
+  $("hotel-select").addEventListener("change", onHotelChange);
+  $("currency-select").addEventListener("change", onCurrencyChange);
+  $("fx-rate").addEventListener("input", calculate);
+  $("fx-refresh").addEventListener("click", fetchLiveFx);
+  ["cash-only","cp-cash","cp-points","points-only"].forEach((id) => $(id).addEventListener("input", calculate));
+
+  $("ocr-trigger").addEventListener("click", () => $("ocr-file").click());
+  $("ocr-file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) runOcr(f);
+  });
+  $("ocr-apply").addEventListener("click", applyOcrText);
+  $("ocr-cancel").addEventListener("click", () => { resetOcrUI(); setOcrStatus("", ""); });
+  updateMarriottLink();
+  calculate();
+  fetchLiveFx();
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
