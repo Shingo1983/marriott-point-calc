@@ -149,9 +149,17 @@
   .field select:disabled { background-color: var(--c-surface-2); color: var(--c-text-subtle); cursor: not-allowed; }
   .wd { color: var(--c-primary); font-weight: 700; font-size: 0.8rem; margin-left: 2px; }
   .date-wrap { position: relative; }
-  .date-wrap input[type="date"] { font-variant-numeric: tabular-nums; }
-  .date-wrap input[type="date"]::-webkit-datetime-edit { opacity: 0; }
-  .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper { opacity: 0; }
+  .date-wrap input[type="date"] {
+    font-variant-numeric: tabular-nums;
+    /* Hide the browser's native date text so only the Japanese overlay shows.
+       iOS Safari ignores opacity on ::-webkit-datetime-edit, so we blank the
+       text color instead — the overlay <span> renders on top. */
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: transparent;
+  }
+  .date-wrap input[type="date"]::-webkit-datetime-edit { color: transparent; -webkit-text-fill-color: transparent; }
+  .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: transparent; -webkit-text-fill-color: transparent; }
   .date-overlay {
     position: absolute;
     left: 12px;
@@ -526,12 +534,15 @@
     .vc-mini { font-size: 0.68rem; padding: 1px 8px; }
     .history-row {
       grid-template-columns: 1fr 52px 52px;
-      row-gap: 3px; column-gap: 6px;
+      row-gap: 4px; column-gap: 6px;
+      padding: 8px 10px;
     }
-    .history-row .h-dates { grid-column: 1 / -1; }
-    .history-row .h-nights-slot { grid-column: 1 / -1; }
-    .history-row .h-hotel { grid-column: 1 / -1; font-weight: 600; }
-    .history-row .h-nums-compact { grid-column: 1 / 2; text-align: left; font-size: 0.72rem; }
+    .history-row .h-dates { grid-column: 1 / 2; grid-row: 1; }
+    .history-row .h-nights-slot { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .history-row .h-hotel { grid-column: 1 / -1; grid-row: 2; font-weight: 600; }
+    .history-row .h-nums-compact { grid-column: 1 / 2; grid-row: 3; text-align: left; font-size: 0.72rem; }
+    .history-row .vc-mini { grid-row: 3; }
+    .history-row .h-points-only { grid-row: 3; }
     .history-header { display: none; }
   }
 </style>
