@@ -70,6 +70,89 @@
     position: relative;
   }
   .header-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; position: relative; }
+  .help-link {
+    margin-left: auto;
+    background: transparent; border: 1px solid var(--c-border-strong);
+    color: var(--c-text-muted); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 5px 11px; border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .help-link:hover, .help-link:focus-visible {
+    background: var(--c-accent-soft); color: var(--c-primary-dark);
+    border-color: var(--c-accent);
+    outline: none;
+  }
+
+  /* ===== HELP MODAL ===== */
+  .help-modal[hidden] { display: none !important; }
+  .help-modal {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+  }
+  .help-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+  }
+  .help-dialog {
+    position: relative;
+    background: var(--c-surface);
+    border-radius: var(--radius-lg);
+    max-width: 520px; width: 100%;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 20px 22px 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--c-border);
+  }
+  .help-close {
+    position: absolute; top: 8px; right: 10px;
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    font-size: 1.6rem; line-height: 1; color: var(--c-text-muted);
+    cursor: pointer; border-radius: 50%;
+    display: grid; place-items: center;
+  }
+  .help-close:hover { background: var(--c-surface-2); color: var(--c-text); }
+  .help-dialog h3 {
+    font-family: var(--font-serif);
+    font-size: 1.15rem; font-weight: 700;
+    color: var(--c-primary-dark);
+    margin: 0 0 10px; padding-right: 32px;
+  }
+  .help-body { font-size: 0.86rem; line-height: 1.65; color: var(--c-text); }
+  .help-body p { margin: 0 0 10px; }
+  .help-body strong { color: var(--c-primary-dark); font-weight: 700; }
+  .help-section {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--c-surface-2);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--c-accent);
+  }
+  .help-section h4 {
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--c-primary-dark);
+    margin: 0 0 6px;
+  }
+  .help-section p { margin: 0 0 6px; font-size: 0.82rem; }
+  .help-section p:last-child { margin-bottom: 0; }
+  .help-section ol {
+    margin: 6px 0 0; padding-left: 18px;
+    font-size: 0.82rem;
+  }
+  .help-section ol li { margin-bottom: 4px; }
+  @media (max-width: 560px) {
+    .help-link { padding: 4px 9px; font-size: 0.66rem; }
+    .help-dialog { padding: 16px 16px 18px; max-height: calc(100vh - 24px); }
+    .help-dialog h3 { font-size: 1rem; }
+    .help-body { font-size: 0.82rem; }
+  }
   .logo-mark {
     flex: 0 0 auto; display: grid; place-items: center;
   }
@@ -134,13 +217,25 @@
     -webkit-appearance: none; appearance: none;
   }
   .field select {
-    background-image:
-      linear-gradient(45deg, transparent 50%, var(--c-text-muted) 50%),
-      linear-gradient(135deg, var(--c-text-muted) 50%, transparent 50%);
-    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
-    background-size: 5px 5px, 5px 5px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%235A5A5A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><polyline points='3,4.75 6,7.75 9,4.75'/></svg>");
+    background-position: right 12px center;
     background-repeat: no-repeat;
-    padding-right: 28px;
+    padding-right: 34px;
+  }
+  .field select optgroup {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--c-text-subtle);
+    letter-spacing: 0.04em;
+    background: var(--c-surface-2);
+  }
+  .field select option {
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+    padding: 4px 0;
   }
   .field input:focus, .field select:focus {
     outline: none; border-color: var(--c-primary);
@@ -563,8 +658,40 @@
       <img src="marriott-bonvoy.png" alt="Marriott Bonvoy">
     </div>
     <div class="logo-tag">Point Value Calculator</div>
+    <button type="button" class="help-link" id="help-open" aria-label="使い方を表示">使い方</button>
   </div>
 </header>
+
+<div class="help-modal" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+  <div class="help-backdrop" data-help-close></div>
+  <div class="help-dialog" role="document">
+    <button type="button" class="help-close" id="help-close" aria-label="閉じる" data-help-close>×</button>
+    <h3 id="help-title">使い方 📝</h3>
+    <div class="help-body">
+      <p>このツールは <strong>Marriott Bonvoy ポイント</strong> の価値（1pt あたり・100円利用あたり）を、現金払い／現金＋ポイント／ポイントのみ の 3 パターンから比較計算するためのものです。</p>
+
+      <section class="help-section">
+        <h4>⚠️ マリオットの仕様上の制限</h4>
+        <p>マリオットは外部からレートを直接取得できないため、<strong>レート数値はこちらで手入力していただく必要があります</strong> 😭。流れは：</p>
+        <ol>
+          <li><strong>STEP 1</strong> でチェックイン／チェックアウト・人数・ホテルを選ぶ</li>
+          <li><strong>「🔗 …の空室・レート検索」</strong> ボタンから公式サイトへ飛ぶ（日付・人数は引き継ぎます）</li>
+          <li>公式のレート画面が出たら <strong>スクリーンショットを撮影</strong> →「📷 スクショから入力」で画像を読み込ませるか、数字を直接 STEP 2 に打ち込む</li>
+        </ol>
+      </section>
+
+      <section class="help-section">
+        <h4>💻 PC でサクッと使いたい場合</h4>
+        <p>上段（STEP 1）を無視して <strong>STEP 2 の 3 つのレートだけ手入力</strong>すれば、すぐに 1pt 価値 と 100円価値が計算されます。</p>
+      </section>
+
+      <section class="help-section">
+        <h4>📊 おまけ：過去ポイント利用履歴</h4>
+        <p>STEP 4 には過去のポイント利用時のレートの事例を参考までに載せてあります ✌️</p>
+      </section>
+    </div>
+  </div>
+</div>
 
 <main>
   <!-- STEP 1 -->
@@ -784,16 +911,24 @@
 <script>
 /* ==== HOTEL DATA ====
    Loaded from hotels.js (scraped full list, 9,788 properties).
-   Falls back to minimal curated subset if hotels.js failed to load. */
+   Falls back to minimal curated subset if hotels.js failed to load.
+   Structure MUST be 4-level: Region → Country → City → [[name, marsha, urlPath], ...] */
 const REGIONS = window.HOTELS_DATA || {
   "アジア": {
-    "日本": [
-      ["The Ritz-Carlton, Tokyo", "tyorz", "/en-us/hotels/tyorz-the-ritz-carlton-tokyo/overview/"],
-      ["The Tokyo EDITION, Toranomon", "tyoet", "/en-us/hotels/tyoet-the-tokyo-edition-toranomon/overview/"],
-      ["W Osaka", "osaow", "/en-us/hotels/osaow-w-osaka/overview/"]
-    ]
+    "日本": {
+      "Tokyo": [
+        ["The Ritz-Carlton, Tokyo", "tyorz", "/en-us/hotels/tyorz-the-ritz-carlton-tokyo/overview/"],
+        ["The Tokyo EDITION, Toranomon", "tyoet", "/en-us/hotels/tyoet-the-tokyo-edition-toranomon/overview/"]
+      ],
+      "Osaka": [
+        ["W Osaka", "osaow", "/en-us/hotels/osaow-w-osaka/overview/"]
+      ]
+    }
   }
 };
+if (!window.HOTELS_DATA) {
+  console.warn("[marriott-point-calc] hotels.js が読み込めなかったため、フォールバックデータを使用しています。");
+}
 let currentHotels = [];
 let currentCityGroups = {}; // displayName -> merged hotels array (after prettify + merge)
 
@@ -1187,33 +1322,66 @@ function onRegionChange() {
   }
   updateHotelCount(); updateMarriottLink();
 }
+function addCityOption(parent, name, count) {
+  const o = document.createElement("option");
+  o.value = name;
+  o.textContent = count > 1 ? `${name}（${count}軒）` : name;
+  parent.appendChild(o);
+  return o;
+}
 function onCountryChange() {
   state.country = $("country-select").value; state.city = ""; state.hotel = null;
   currentHotels = []; currentCityGroups = {};
+  const sel = $("city-select");
   if (!state.country) {
-    resetSelect($("city-select"),"先に国を選択");
+    resetSelect(sel,"先に国を選択");
     resetSelect($("hotel-select"),"先に都市を選択");
-  } else {
-    const rawCities = REGIONS[state.region][state.country] || {};
-    currentCityGroups = mergeCityGroups(rawCities);
-    // Sort: "（その他）" & "（全ホテル）" last, everything else by hotel count desc then name
-    const entries = Object.entries(currentCityGroups);
-    const isTail = (name) => name === "（その他）" || name === "（全ホテル）";
-    entries.sort((a, b) => {
-      const ta = isTail(a[0]), tb = isTail(b[0]);
-      if (ta !== tb) return ta ? 1 : -1;
-      return (b[1].length - a[1].length) || a[0].localeCompare(b[0], "ja");
-    });
-    const sel = $("city-select");
-    sel.innerHTML = `<option value="">選択してください</option>`;
-    entries.forEach(([name, hotels]) => {
-      const o = document.createElement("option");
-      o.value = name; o.textContent = `${name} (${hotels.length})`;
-      sel.appendChild(o);
-    });
-    sel.disabled = false;
-    resetSelect($("hotel-select"),"先に都市を選択");
+    updateHotelCount(); updateMarriottLink();
+    return;
   }
+  const rawCities = REGIONS[state.region][state.country] || {};
+  currentCityGroups = mergeCityGroups(rawCities);
+  const entries = Object.entries(currentCityGroups);
+  const isTail = (name) => name === "（その他）" || name === "（全ホテル）";
+  // 五十音/ABC順 (ja locale) — tail groups pushed to end
+  entries.sort((a, b) => {
+    const ta = isTail(a[0]), tb = isTail(b[0]);
+    if (ta !== tb) return ta ? 1 : -1;
+    return a[0].localeCompare(b[0], "ja");
+  });
+
+  sel.innerHTML = `<option value="">選択してください</option>`;
+
+  // 1グループしかない国 (例: （全ホテル） のみ) は自動選択してホテル選択へ
+  if (entries.length === 1) {
+    const [name, hotels] = entries[0];
+    const o = addCityOption(sel, name, hotels.length);
+    sel.disabled = false;
+    sel.value = name;
+    state.city = name;
+    currentHotels = hotels;
+    fillHotelSelect(currentHotels);
+    updateHotelCount(); updateMarriottLink();
+    return;
+  }
+
+  const named = entries.filter(([n]) => !isTail(n));
+  const tails = entries.filter(([n]) => isTail(n));
+  // 都市数が多い国は optgroup で「主要都市」/「その他」に仕切る
+  if (named.length >= 8 && tails.length > 0) {
+    const g1 = document.createElement("optgroup");
+    g1.label = `都市（${named.length}）`;
+    named.forEach(([n, h]) => addCityOption(g1, n, h.length));
+    sel.appendChild(g1);
+    const g2 = document.createElement("optgroup");
+    g2.label = "その他";
+    tails.forEach(([n, h]) => addCityOption(g2, n, h.length));
+    sel.appendChild(g2);
+  } else {
+    entries.forEach(([n, h]) => addCityOption(sel, n, h.length));
+  }
+  sel.disabled = false;
+  resetSelect($("hotel-select"),"先に都市を選択");
   updateHotelCount(); updateMarriottLink();
 }
 function onCityChange() {
@@ -1258,10 +1426,17 @@ function updateMarriottLink() {
   params.set("costView", "AVG");
   params.set("flexibleDateSearch", "false");
   params.set("numberOfRooms", "1");
+  const totalGuests = (state.adults || 0) + (state.children || 0);
+  params.set("numberOfGuests", String(totalGuests));
   params.set("numberOfAdults", String(state.adults));
+  params.set("numAdultsPerRoom", String(state.adults));
   params.set("numberOfChildren", String(state.children || 0));
   if (state.children > 0) {
+    params.set("numChildrenPerRoom", String(state.children));
     params.set("childrenAges", state.childrenAges.join(","));
+    state.childrenAges.forEach((age, i) => {
+      params.append("childAge", String(age));
+    });
   }
   params.set("useRewardsPoints", "true");
   params.set("clusterCode", "none");
@@ -1700,6 +1875,18 @@ function init() {
   updateMarriottLink();
   calculate();
   fetchLiveFx();
+  initHelpModal();
+}
+
+function initHelpModal() {
+  const modal = $("help-modal");
+  const open = $("help-open");
+  if (!modal || !open) return;
+  const show = () => { modal.hidden = false; document.body.style.overflow = "hidden"; };
+  const hide = () => { modal.hidden = true; document.body.style.overflow = ""; };
+  open.addEventListener("click", show);
+  modal.querySelectorAll("[data-help-close]").forEach((el) => el.addEventListener("click", hide));
+  document.addEventListener("keydown", (e) => { if (!modal.hidden && e.key === "Escape") hide(); });
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
