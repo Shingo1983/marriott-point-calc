@@ -1131,12 +1131,12 @@ const CITY_DISPLAY = {
   "Rotorua":"ロトルア","Nadi":"ナンディ","Suva":"スバ","Papeete":"パペーテ","Noumea":"ヌメア",
 
   // --- Suffixes/token-only hits (best-effort single-token guesses) ---
-  "York":"ニューヨーク","Orleans":"ニューオーリンズ","Angeles":"ロサンゼルス","Francisco":"サンフランシスコ",
-  "Diego":"サンディエゴ","Jose":"サンノゼ","Antonio":"サンアントニオ","Vegas":"ラスベガス",
-  "Lake":"ソルトレイク","Salt":"ソルトレイク","City":"都市部","Louis":"セントルイス",
-  "Paul":"セントポール","Petersburg":"サンクトペテルブルク","Dhabi":"アブダビ","Lumpur":"クアラルンプール",
-  "Minh":"ホーチミン","Chi":"ホーチミン","Cabos":"ロスカボス","Cabo":"ロスカボス",
-  "Vallarta":"プエルトバジャルタ","Aires":"ブエノスアイレス","Paulo":"サンパウロ",
+  // Avoid ambiguous first-name tokens (Francisco / Diego / Jose / Antonio / Paul)
+  // because they cross-contaminate into Spain / Philippines hotel names.
+  "York":"ニューヨーク","Orleans":"ニューオーリンズ","Vegas":"ラスベガス",
+  "Petersburg":"サンクトペテルブルク","Dhabi":"アブダビ","Lumpur":"クアラルンプール",
+  "Minh":"ホーチミン","Cabos":"ロスカボス","Cabo":"ロスカボス",
+  "Vallarta":"プエルトバジャルタ","Aires":"ブエノスアイレス",
   "Janeiro":"リオデジャネイロ","Horizonte":"ベロオリゾンテ","Penh":"プノンペン","Reap":"シェムリアップ",
   "Prabang":"ルアンパバーン","Chi-Minh":"ホーチミン",
 };
@@ -1171,11 +1171,16 @@ const GENERIC_CITY_TOKENS = new Set([
 function prettifyCity(key) {
   if (!key) return "（その他）";
   if (key === "(全ホテル)") return "（全ホテル）";
+  // hotels.js raw key "その他" (without full-width parens) → normalize to tail form
+  if (key === "その他" || key === "（その他）") return "（その他）";
   if (CITY_DISPLAY[key]) return CITY_DISPLAY[key];
   // 3-letter marsha-prefix fallback (TYO, HKG, LAX, ...)
   if (/^[A-Z]{3}$/.test(key)) return "（その他）";
   if (GENERIC_CITY_TOKENS.has(key)) return "（その他）";
-  return key; // leave English as-is (still readable)
+  // Any untranslated ASCII-only key buckets into （その他） to keep the list
+  // visually consistent (all Japanese katakana). Mixed alphabet/kana looks amateur.
+  if (/^[A-Za-z][A-Za-z0-9'\-\s&.]*$/.test(key)) return "（その他）";
+  return key;
 }
 
 function mergeCityGroups(rawCities) {
@@ -1189,6 +1194,24 @@ function mergeCityGroups(rawCities) {
       if (groups[display].seen.has(marsha)) continue;
       groups[display].seen.add(marsha);
       groups[display].hotels.push(h);
+    }
+  }
+  // Fold 1-hotel named cities into （その他） to declutter the dropdown.
+  // Keep "（全ホテル）" as-is (never fold).
+  const OTHER = "（その他）";
+  const ALL   = "（全ホテル）";
+  const namedKeys = Object.keys(groups).filter(k => k !== OTHER && k !== ALL);
+  const singletons = namedKeys.filter(k => groups[k].hotels.length === 1);
+  if (singletons.length >= 2) {
+    if (!groups[OTHER]) groups[OTHER] = { hotels: [], seen: new Set() };
+    for (const k of singletons) {
+      for (const h of groups[k].hotels) {
+        const marsha = h[1];
+        if (groups[OTHER].seen.has(marsha)) continue;
+        groups[OTHER].seen.add(marsha);
+        groups[OTHER].hotels.push(h);
+      }
+      delete groups[k];
     }
   }
   // Sort hotels inside each group by name
