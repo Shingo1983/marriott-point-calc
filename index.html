@@ -72,17 +72,22 @@
   .header-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; position: relative; }
   .help-link {
     margin-left: auto;
-    background: transparent; border: 1px solid var(--c-border-strong);
-    color: var(--c-text-muted); font-size: 0.72rem; font-weight: 600;
-    letter-spacing: 0.04em;
-    padding: 5px 11px; border-radius: 999px;
+    background: transparent; border: none;
+    padding: 4px 2px 5px;
+    color: var(--c-text-subtle);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    border-bottom: 1px solid var(--c-border);
+    border-radius: 0;
+    transition: color 0.18s, border-color 0.18s;
   }
   .help-link:hover, .help-link:focus-visible {
-    background: var(--c-accent-soft); color: var(--c-primary-dark);
-    border-color: var(--c-accent);
+    color: var(--c-primary-dark);
+    border-bottom-color: var(--c-accent);
     outline: none;
   }
 
@@ -148,7 +153,7 @@
   }
   .help-section ol li { margin-bottom: 4px; }
   @media (max-width: 560px) {
-    .help-link { padding: 4px 9px; font-size: 0.66rem; }
+    .help-link { padding: 3px 2px 4px; font-size: 0.6rem; letter-spacing: 0.2em; }
     .help-dialog { padding: 16px 16px 18px; max-height: calc(100vh - 24px); }
     .help-dialog h3 { font-size: 1rem; }
     .help-body { font-size: 0.82rem; }
@@ -554,7 +559,42 @@
   }
   .btn-secondary:hover { background: var(--c-surface-2); }
 
-  .history-list { display: flex; flex-direction: column; gap: 2px; }
+  .history-intro {
+    background: linear-gradient(90deg, var(--c-accent-soft) 0%, rgba(253,228,213,0.35) 60%, var(--c-surface-2) 100%);
+    border-left: 3px solid var(--c-accent);
+    padding: 9px 12px 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 9px;
+    line-height: 1.55;
+  }
+  .history-intro .hi-main {
+    font-size: 0.78rem; color: var(--c-primary-dark);
+  }
+  .history-intro .hi-main strong { font-weight: 700; }
+  .history-intro .hi-legend {
+    margin-top: 6px;
+    display: flex; flex-wrap: wrap; gap: 4px 6px;
+    align-items: center;
+    font-size: 0.68rem; color: var(--c-text-muted);
+  }
+  .history-intro .hi-legend .tier-pill {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 999px;
+    font-weight: 700; font-size: 0.66rem;
+    white-space: nowrap;
+  }
+  .history-intro .hi-legend .tier-pill.v-excellent { background: var(--c-val-excellent-bg); color: var(--c-val-excellent-text); }
+  .history-intro .hi-legend .tier-pill.v-good      { background: var(--c-val-good-bg);      color: var(--c-val-good-text); }
+  .history-intro .hi-legend .tier-pill.v-ok        { background: var(--c-val-ok-bg);        color: var(--c-val-ok-text); }
+  .history-intro .hi-legend .tier-pill.v-low       { background: var(--c-val-low-bg);       color: var(--c-val-low-text); }
+  @media (max-width: 520px) {
+    .history-intro { padding: 8px 10px 9px; }
+    .history-intro .hi-main { font-size: 0.74rem; }
+    .history-intro .hi-legend { font-size: 0.64rem; gap: 3px 5px; }
+    .history-intro .hi-legend .tier-pill { font-size: 0.62rem; padding: 1px 6px; }
+  }
+
+  .history-list { display: flex; flex-direction: column; gap: 3px; }
   .history-row {
     background: #fff;
     border-radius: 6px;
@@ -658,7 +698,7 @@
       <img src="marriott-bonvoy.png" alt="Marriott Bonvoy">
     </div>
     <div class="logo-tag">Point Value Calculator</div>
-    <button type="button" class="help-link" id="help-open" aria-label="使い方を表示">使い方</button>
+    <button type="button" class="help-link" id="help-open" aria-label="使い方を表示">How to use</button>
   </div>
 </header>
 
@@ -889,14 +929,24 @@
   <!-- STEP 4 -->
   <section class="card">
     <h2><span class="step">4</span>過去のポイント利用履歴</h2>
+    <div class="history-intro">
+      <div class="hi-main">💡 各行の右端 2 つのピル = <strong>1ポイントの価値</strong>／<strong>100円利用時の価値</strong>（単位：円）。値が大きいほどポイント利用がお得。</div>
+      <div class="hi-legend">
+        <span>色分け（1pt価値）:</span>
+        <span class="tier-pill v-excellent">◎ 2.0以上</span>
+        <span class="tier-pill v-good">○ 1.5〜2.0</span>
+        <span class="tier-pill v-ok">△ 1.0〜1.5</span>
+        <span class="tier-pill v-low">▽ 1.0未満</span>
+      </div>
+    </div>
     <div class="history-stats" id="history-stats" style="margin-bottom:8px;">—</div>
     <div class="history-row history-header" aria-hidden="true">
       <span>期間</span>
       <span>泊</span>
       <span class="h-hotel-head">ホテル</span>
-      <span class="h-nums-head">pt / 料金</span>
-      <span>1pt</span>
-      <span>100円</span>
+      <span class="h-nums-head">利用pt / 現金価格</span>
+      <span>1pt価値</span>
+      <span>100円価値</span>
     </div>
     <div class="history-list" id="history-list"></div>
   </section>
@@ -1343,11 +1393,11 @@ function onCountryChange() {
   currentCityGroups = mergeCityGroups(rawCities);
   const entries = Object.entries(currentCityGroups);
   const isTail = (name) => name === "（その他）" || name === "（全ホテル）";
-  // 五十音/ABC順 (ja locale) — tail groups pushed to end
+  // 件数の多い順 — 「（その他）」「（全ホテル）」は無条件に末尾
   entries.sort((a, b) => {
     const ta = isTail(a[0]), tb = isTail(b[0]);
     if (ta !== tb) return ta ? 1 : -1;
-    return a[0].localeCompare(b[0], "ja");
+    return (b[1].length - a[1].length) || a[0].localeCompare(b[0], "ja");
   });
 
   sel.innerHTML = `<option value="">選択してください</option>`;
@@ -1772,6 +1822,11 @@ function parseMarriottRates(text, nights) {
   const isEarnedNoise = (x) => /獲得/.test(cleaned.slice(
     Math.max(0, x.idx - 25), Math.min(cleaned.length, x.idx + 20)
   ));
+  // Member-rate markers: 会員向け料金 / 会員向けレート / 会員価格 / メンバー料金 / Member Rate etc.
+  // Window is wider before the number since labels typically precede the price block.
+  const isMemberMarked = (x) => /会員|メンバー|Member(?!ship)/i.test(cleaned.slice(
+    Math.max(0, x.idx - 80), Math.min(cleaned.length, x.idx + 20)
+  ));
 
   remaining = remaining.filter(x => !isEarnedNoise(x));
   if (!remaining.length) return out;
@@ -1781,6 +1836,7 @@ function parseMarriottRates(text, nights) {
   const unknown   = remaining.filter(x => !isCashMarked(x) && !isPtsMarked(x));
 
   // 5. Cash-only: prefer explicit cash markers, then detect per-night/total pair.
+  //    会員向けレートのラベルが付いた金額があればそれを優先する。
   const pickCashTotal = (arr) => {
     if (!arr.length) return null;
     const vals = arr.map(x => x.val);
@@ -1801,7 +1857,9 @@ function parseMarriottRates(text, nights) {
   };
 
   if (cashCands.length) {
-    out.cashOnly = pickCashTotal(cashCands);
+    // 会員向けレートのラベル付きがあれば、そのプールに絞り込む
+    const memberCash = cashCands.filter(isMemberMarked);
+    out.cashOnly = pickCashTotal(memberCash.length ? memberCash : cashCands);
   }
 
   // 6. Points-only: prefer explicit points markers; else fallback to unknown pool.
