@@ -1183,18 +1183,40 @@ function prettifyCity(key) {
   return key;
 }
 
+// hotels.js のビルド時に "San" トークンが誤って都市名に変換されたラベル群。
+// 各ホテル名が該当都市名を含むかで振り分け、含まないものは （その他） へ。
+const CITY_NAME_VALIDATION = {
+  "サンフランシスコ": /\bSan Francisco\b/i,
+  "サンディエゴ":     /\bSan Diego\b/i,
+  "サンノゼ":         /\bSan Jose\b/i,
+  "サンアントニオ":   /\bSan Antonio\b/i,
+  "ロサンゼルス":     /\b(Los Angeles|LAX|Hollywood|Beverly Hills|Santa Monica|Pasadena)\b/i,
+};
+
 function mergeCityGroups(rawCities) {
   // rawCities: { rawKey: [[name, marsha, url], ...] }
   const groups = {}; // displayName -> { hotels: [], seen: Set<marsha> }
+  const OTHER = "（その他）";
+  const ALL   = "（全ホテル）";
+  const addTo = (name, h) => {
+    if (!groups[name]) groups[name] = { hotels: [], seen: new Set() };
+    const marsha = h[1];
+    if (groups[name].seen.has(marsha)) return;
+    groups[name].seen.add(marsha);
+    groups[name].hotels.push(h);
+  };
   for (const key of Object.keys(rawCities)) {
     const display = prettifyCity(key);
-    if (!groups[display]) groups[display] = { hotels: [], seen: new Set() };
+    const validator = CITY_NAME_VALIDATION[display];
     for (const h of rawCities[key]) {
-      const marsha = h[1];
-      if (groups[display].seen.has(marsha)) continue;
-      groups[display].seen.add(marsha);
-      groups[display].hotels.push(h);
+      // 該当都市のバリデーションがある場合はホテル名にその都市名が含まれるか検証
+      if (validator && !validator.test(h[0])) { addTo(OTHER, h); continue; }
+      addTo(display, h);
     }
+  }
+  // バリデーション後に中身が空になった主要都市キーは削除
+  for (const k of Object.keys(groups)) {
+    if (groups[k].hotels.length === 0) delete groups[k];
   }
   // Fold 1-hotel named cities into （その他） to declutter the dropdown.
   // Keep "（全ホテル）" as-is (never fold).
