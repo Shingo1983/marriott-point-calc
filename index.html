@@ -1220,8 +1220,6 @@ function mergeCityGroups(rawCities) {
   }
   // Fold 1-hotel named cities into （その他） to declutter the dropdown.
   // Keep "（全ホテル）" as-is (never fold).
-  const OTHER = "（その他）";
-  const ALL   = "（全ホテル）";
   const namedKeys = Object.keys(groups).filter(k => k !== OTHER && k !== ALL);
   const singletons = namedKeys.filter(k => groups[k].hotels.length === 1);
   if (singletons.length >= 2) {
