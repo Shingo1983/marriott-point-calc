@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#6B2C32">
+<meta name="theme-color" content="#141414">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Marriott Point Value Calculator</title>
@@ -1260,6 +1260,7 @@ const HISTORY_DEFAULT = [
   { ci: "2022-08-26", co: "2022-08-28", hotel: "京都ウェスティン",                                                     points: 50000,  price: 103074,   comparison: false }
 ];
 const HISTORY_KEY = "marriott-history-v1";
+const PREFS_KEY = "marriott-prefs-v1"; // 人数・子供年齢・通貨 (再訪時に再入力不要にする)
 
 const state = {
   adults: 2, children: 2, childrenAges: [9, 5],
@@ -1318,19 +1319,39 @@ function updateStayChip() {
   updateDateWd();
 }
 function updateDateWd() {
-  const fmt = (iso) => {
-    if (!iso) return "";
-    const d = new Date(iso + "T00:00:00");
-    if (isNaN(d)) return iso;
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const w = WEEKDAYS_JA[d.getDay()];
-    return `${y}/${m}/${day}(${w})`;
-  };
   const a = $("checkin-display"), b = $("checkout-display");
-  if (a) a.textContent = fmt(state.checkin);
-  if (b) b.textContent = fmt(state.checkout);
+  if (a) a.textContent = formatDateJa(state.checkin);
+  if (b) b.textContent = formatDateJa(state.checkout);
+}
+// ISO 日付に日数を加算 (ローカル時刻ベース — "YYYY-MM-DD" を素の new Date に渡すと UTC 解釈されるため)
+function addDays(iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d)) return iso;
+  d.setDate(d.getDate() + n);
+  return toISODate(d);
+}
+
+/* ==== PREFS (人数・通貨の永続化) ==== */
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      adults: state.adults, children: state.children, childrenAges: state.childrenAges,
+      currency: $("currency-select").value,
+    }));
+  } catch (e) {}
+}
+function loadPrefs() {
+  let p = null;
+  try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
+  if (!p || typeof p !== "object") return;
+  const clamp = (v, lo, hi, dflt) => Number.isInteger(v) ? Math.max(lo, Math.min(hi, v)) : dflt;
+  state.adults = clamp(p.adults, 1, 9, state.adults);
+  state.children = clamp(p.children, 0, 6, state.children);
+  if (Array.isArray(p.childrenAges)) state.childrenAges = p.childrenAges.map(a => clamp(a, 0, 17, 5));
+  $("adults-value").textContent = state.adults;
+  $("children-value").textContent = state.children;
+  const sel = $("currency-select");
+  if (p.currency && [...sel.options].some(o => o.value === p.currency)) { sel.value = p.currency; onCurrencyChange(); }
 }
 
 /* ==== COUNTERS ==== */
@@ -1345,7 +1366,7 @@ function initCounters() {
         state[key] = next;
         $(`${key}-value`).textContent = next;
         if (key === "children") syncChildrenAges();
-        updateMarriottLink();
+        updateMarriottLink(); savePrefs();
       });
     });
   });
@@ -1364,7 +1385,7 @@ function syncChildrenAges() {
     chip.querySelector("input").addEventListener("input", (e) => {
       const v = parseInt(e.target.value, 10);
       state.childrenAges[idx] = Number.isFinite(v) ? Math.max(0, Math.min(17, v)) : 0;
-      updateMarriottLink();
+      updateMarriottLink(); savePrefs();
     });
     c.appendChild(chip);
   });
@@ -1843,11 +1864,6 @@ function parseMarriottRates(text, nights) {
   const lcleaned = cleaned.toLowerCase();
   const context = (idx, w = 30) =>
     lcleaned.slice(Math.max(0, idx - w), Math.min(lcleaned.length, idx + w));
-  const near = (idx, str, w = 20) => {
-    const s = Math.max(0, idx - w);
-    const e = Math.min(lcleaned.length, idx + w + String(idx).length);
-    return lcleaned.slice(s, e).includes(str);
-  };
 
   // Cash markers: ¥/￥/\ (OCR often maps ¥ to backslash on jp Windows fonts) immediately
   // before the number, or JPY/円/合計金額 within short window.
@@ -1926,23 +1942,63 @@ function parseMarriottRates(text, nights) {
   return out;
 }
 
+/**
+ * OCR テキストから通貨を推定する。明示的な通貨記号/コードの出現回数が最多のものを返す。
+ * 該当なし、または currency-select に存在しない通貨なら null。
+ */
+function detectCurrency(text) {
+  if (!text) return null;
+  const patterns = {
+    JPY: /[¥￥]|円|\bJPY\b/g,
+    USD: /\bUSD\b|US\$/g,
+    EUR: /€|\bEUR\b/g,
+    GBP: /£|\bGBP\b/g,
+    SGD: /\bSGD\b|S\$/g,
+    AUD: /\bAUD\b|A\$/g,
+    HKD: /\bHKD\b|HK\$/g,
+    THB: /฿|\bTHB\b/g,
+    KRW: /₩|\bKRW\b/g,
+    CNY: /\bCNY\b|\bRMB\b/g,
+    AED: /\bAED\b/g,
+    CAD: /\bCAD\b|C\$/g,
+    NZD: /\bNZD\b|NZ\$/g,
+    CHF: /\bCHF\b/g,
+  };
+  let best = null, bestCount = 0;
+  for (const [code, re] of Object.entries(patterns)) {
+    const count = (text.match(re) || []).length;
+    if (count > bestCount) { best = code; bestCount = count; }
+  }
+  // 裸の "$" は USD の可能性が高いが、他の通貨記号が無い場合のみ採用
+  if (!best && /\$/.test(text)) best = "USD";
+  if (!best) return null;
+  const sel = $("currency-select");
+  return [...sel.options].some(o => o.value === best) ? best : null;
+}
+
 function applyOcrText() {
   const text = $("ocr-text").value;
   const parsed = parseMarriottRates(text, daysBetween(state.checkin, state.checkout));
+  // スクショの通貨と通貨セレクトが食い違うと換算が狂うため、検出した通貨に合わせる
+  const detected = detectCurrency(text);
+  const sel = $("currency-select");
+  let switched = null;
+  if (detected && sel.value !== detected) { sel.value = detected; onCurrencyChange(); switched = detected; }
   if (parsed.cashOnly != null) $("cash-only").value = parsed.cashOnly;
   if (parsed.cpCash != null) $("cp-cash").value = parsed.cpCash;
   if (parsed.cpPoints != null) $("cp-points").value = parsed.cpPoints;
   if (parsed.pointsOnly != null) $("points-only").value = parsed.pointsOnly;
   calculate();
   resetOcrUI();
-  setOcrStatus("✓ 3レートに反映しました", "ok");
-  setTimeout(() => setOcrStatus("", ""), 3000);
+  setOcrStatus(switched ? `✓ 3レートに反映しました（通貨を ${switched} に切替）` : "✓ 3レートに反映しました", "ok");
+  setTimeout(() => setOcrStatus("", ""), 4000);
 }
 
 /* ==== INIT ==== */
 function init() {
   initDates();
   initCounters();
+  loadPrefs();
   syncChildrenAges();
   populateRegions();
   loadHistory();
@@ -1950,18 +2006,32 @@ function init() {
 
   $("checkin").addEventListener("change", (e) => {
     state.checkin = e.target.value;
-    if (state.checkout && state.checkin >= state.checkout) {
-      const d = new Date(state.checkin); d.setDate(d.getDate() + 1);
-      state.checkout = toISODate(d); $("checkout").value = state.checkout;
+    if (state.checkin) {
+      // チェックアウトは常にチェックイン翌日以降
+      $("checkout").min = addDays(state.checkin, 1);
+      if (state.checkout && state.checkin >= state.checkout) {
+        state.checkout = addDays(state.checkin, 1); $("checkout").value = state.checkout;
+      }
     }
     updateStayChip(); updateMarriottLink();
   });
-  $("checkout").addEventListener("change", (e) => { state.checkout = e.target.value; updateStayChip(); updateMarriottLink(); });
+  $("checkout").addEventListener("change", (e) => {
+    state.checkout = e.target.value;
+    if (state.checkin && state.checkout && state.checkout <= state.checkin) {
+      // チェックイン以前を選んだ場合はチェックイン翌日に補正
+      state.checkout = addDays(state.checkin, 1); $("checkout").value = state.checkout;
+    }
+    updateStayChip(); updateMarriottLink();
+  });
+  // ホテル未選択時のリンク (href="#") は新規タブで空ページを開くだけなので無効化
+  $("marriott-link").addEventListener("click", (e) => {
+    if ($("marriott-link").getAttribute("aria-disabled") === "true") e.preventDefault();
+  });
   $("region-select").addEventListener("change", onRegionChange);
   $("country-select").addEventListener("change", onCountryChange);
   $("city-select").addEventListener("change", onCityChange);
   $("hotel-select").addEventListener("change", onHotelChange);
-  $("currency-select").addEventListener("change", onCurrencyChange);
+  $("currency-select").addEventListener("change", () => { onCurrencyChange(); savePrefs(); });
   $("fx-rate").addEventListener("input", calculate);
   $("fx-refresh").addEventListener("click", fetchLiveFx);
   ["cash-only","cp-cash","cp-points","points-only"].forEach((id) => $(id).addEventListener("input", calculate));
